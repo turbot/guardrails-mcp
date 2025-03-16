@@ -1,0 +1,19 @@
+# Ignore file types
+*.tgz
+*.bak
+*.zip
+.*.swp
+.*.swo
+.vscode/launch.json
+*.env
+
+# Ignore Apple custom attributes file
+.DS_Store
+
+# Ignore node dependencies
+node_modules
+
+# Ignore build files except for GitHub action build files and integration test
+# runner
+**/dist/*
+!.github/**/dist/*
