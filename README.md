@@ -1,9 +1,7 @@
 # Guardrails Model Context Protocol (MCP) Server
 
-<img src="https://badge.mcpx.dev?type=server" title="MCP Server"/>
-<img src="https://badge.mcpx.dev?type=server&features=tools" title="MCP server with features/>&nbsp;
-
-&nbsp;
+<img src="https://badge.mcpx.dev?type=server" title="MCP Server"/> 
+<!-- <img src="https://badge.mcpx.dev?type=server&features=tools" title="MCP server with features/>&nbsp; -->
 
 Enable AI assistants like Claude to explore and query your Guardrails data! This Model Context Protocol (MCP) server lets AI tools:
 
@@ -12,7 +10,13 @@ Enable AI assistants like Claude to explore and query your Guardrails data! This
 
 ## Demo
 
-Note: I have added the following context for my Project.
+### Query Guardrails and Run a control
+https://github.com/user-attachments/assets/d3712d18-571a-45f7-9241-19c598d072ce
+
+### Create a policy pack
+https://github.com/user-attachments/assets/51494295-6f80-4a2f-a785-15f77c102199
+
+**Note**: The following context was added to the Project.
 
 **Project Instructions**
 
@@ -171,7 +175,3 @@ Replace `/path/to/your/workspace` with the absolute path to your local developme
 - **Authentication Errors**: Ensure your API key is correct and has the necessary permissions
 - **Connection Issues**: Verify the Guardrails endpoint URL is correct
 - **API Errors**: Check the server logs for detailed GraphQL error messages
-
-## License
-
-This MCP server is licensed under the MIT License. This means you are free to use, modify, and distribute the software, subject to the terms and conditions of the MIT License. For more details, please see the LICENSE file in the project repository.
