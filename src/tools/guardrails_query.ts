@@ -11,28 +11,15 @@ export function registerQueryTool(server: McpServer) {
       variables: z.record(z.any()).optional().describe("Optional variables for the mutation")
     },
     async ({ query, variables = {} }) => {
-      try {
-        const resources = await executeQuery(query, variables);
-        return {
-          content: [
-            {
-              type: "text",
-              text: resources,
-            },
-          ],
-        };
-      } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : String(error);
-        return {
-          isError: true,
-          content: [
-            {
-              type: "text",
-              text: `Error executing GraphQL query: ${errorMessage}`,
-            },
-          ],
-        };
-      }
+      const resources = await executeQuery(query, variables);
+      return {
+        content: [
+          {
+            type: "text",
+            text: resources,
+          },
+        ],
+      };
     }
   );
 } 

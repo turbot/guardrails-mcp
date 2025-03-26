@@ -22,11 +22,12 @@
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.0",
     "@types/node": "^20.10.0",
-    "zod": "^3.22.4",
-    "dotenv": "^16.4.7",
     "buffer": "^6.0.3",
+    "colors": "^1.4.0",
+    "dotenv": "^16.4.7",
+    "graphql": "^16.10.0",
     "graphql-request": "^6.1.0",
-    "colors": "^1.4.0"
+    "zod": "^3.22.4"
   },
   "devDependencies": {
     "@types/node": "^20.10.0",
