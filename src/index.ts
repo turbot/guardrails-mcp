@@ -13,6 +13,7 @@ import { registerQueryTool } from "./tools/guardrails_query.js";
 import { registerMutationTool } from "./tools/guardrails_mutation.js";
 import { registerListResourceTypesTool } from "./tools/list_guardrails_resource_types.js";
 import { registerListControlTypesTool } from "./tools/list_guardrails_control_types.js";
+import { registerListPolicyTypesTool } from "./tools/list_guardrails_policy_types.js";
 
 // Import prompt registrations
 import { registerPrompts } from "./prompts/index.js";
@@ -45,6 +46,7 @@ registerQueryTool(server);
 registerMutationTool(server);
 registerListResourceTypesTool(server);
 registerListControlTypesTool(server);
+registerListPolicyTypesTool(server);
 
 // // Register prompts
 // registerResourcePrompts(server);
