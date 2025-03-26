@@ -12,6 +12,9 @@ const { TURBOT_GRAPHQL_ENDPOINT } = config;
 import { registerQueryTool } from "./tools/guardrails_query.js";
 import { registerMutationTool } from "./tools/guardrails_mutation.js";
 
+// Import prompt registrations
+import { registerPrompts } from "./prompts/index.js";
+
 // // Import prompt registrations
 // import { registerResourcePrompts } from "./prompts/resourceAnalysis.js";
 // import { registerSecurityPrompts } from "./prompts/securityAnalysis.js";
@@ -42,6 +45,9 @@ registerMutationTool(server);
 // // Register prompts
 // registerResourcePrompts(server);
 // registerSecurityPrompts(server);
+
+// Register prompts
+registerPrompts(server);
 
 // Start the server
 async function main() {
