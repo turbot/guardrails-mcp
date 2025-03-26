@@ -20,6 +20,12 @@ interface ControlType {
     } | null;
     uri: string;
   };
+  targets: string[];
+  actionTypes: {
+    items: Array<{
+      uri: string;
+    }>;
+  };
 }
 
 interface QueryResponse {
@@ -62,8 +68,14 @@ export function registerListControlTypesTool(server: McpServer) {
                 turbot {
                   id
                 }
+                targets
+                actionTypes(filter: "limit:5000") {
+                  items {
+                    uri
+                  }
+                }
                 category {
-                  trunk {
+                    trunk {
                     title
                   }
                   uri
@@ -86,6 +98,8 @@ export function registerListControlTypesTool(server: McpServer) {
           description: item.description,
           icon: item.icon,
           modUri: item.modUri,
+          targets: item.targets,
+          actionTypes: item.actionTypes.items.map(at => at.uri),
           category: {
             uri: item.category.uri,
             trunkTitle: item.category.trunk?.title || null
