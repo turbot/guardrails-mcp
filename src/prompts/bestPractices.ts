@@ -18,9 +18,7 @@ export async function handleBestPracticesPrompt(): Promise<GetPromptResult> {
    - Always return results in a clear, formatted structure
    - Minimize explanation of the query
    - Only explain specific aspects of the query if they are non-obvious or particularly important
-   - Don't explain your understanding of the request or how you crafted the query
    - Keep responses concise and focused on the data
-   - Explain your thinking when reworking queries for an error
 
 2. Query Structure
    - Use fragments for reusable field selections
@@ -40,14 +38,20 @@ export async function handleBestPracticesPrompt(): Promise<GetPromptResult> {
      }
 
      query GetResources {
-       resources(filter: "resourceType = aws_iam_user") {
+       resources(filter: "resourceType:tmod:@turbot/aws-s3#/resource/types/bucket") {
          items {
            ...resourceFields
            trunk {
              items {
-               ...resourceFields
+               turbot {
+                 id
+                 title
+               }
              }
            }
+         }
+         paging {
+           next
          }
        }
      }
@@ -60,7 +64,7 @@ export async function handleBestPracticesPrompt(): Promise<GetPromptResult> {
    - Example:
      \`\`\`graphql
      query GetUserPolicies {
-       resources(filter: "resourceType = aws_iam_user") {
+       resources(filter: "resourceType:tmod:@turbot/aws-iam#/resource/types/iamUser") {
          items {
            turbot {
              id
@@ -81,18 +85,36 @@ export async function handleBestPracticesPrompt(): Promise<GetPromptResult> {
    - Good: { resources { items { turbot { id title } data } } }
 
 5. Filtering
-   - Use the filter argument to reduce data transfer
-   - Filter as early as possible in the query
+   - Multiple conditions are joined with whitespace (AND)
+   - Multiple values can be joined with commas (OR)
    - Common filters:
-     - resourceType = <type>
-     - resourceTypeId = <type_id>
-     - controlCategoryId = <category_id>
-     - policyTypeId = <policy_type_id>
-   - Example:
+     
+     a. Resource Search:
+     - Full text search in AKAs: resource:foo level:self
+     - AWS account specific: resource:arn:aws:::876515858155 level:self
+     - Resources within account: resource:arn:aws:::876515858155 level:descendant
+     
+     b. Tags and Metadata:
+     - Tag filters: tags:department=/^sales$/i
+     - Creation time: createTimestamp:>T-7d
+     - Last modified: timestamp:>T-15m
+     - Actor filter: actorIdentityId:170668258072293
+     
+     c. Resource Properties:
+     - IP range filter: resourceType:instance $.PrivateIpAddress:<172.31.6.0/24
+     - Numeric comparison: resourceType:volume $.Size:>=1000
+     - State filter: resourceType:volume $.Attachments.*.State:!attached
+     
+     d. Categories and Types:
+     - Resource categories: resourceCategory:compute,storage
+     - Control types: controlType:dataProtection
+     - Policy types: policyType:approvedPublicIp
+     
+     Example:
      \`\`\`graphql
-     query GetAwsUsers {
+     query GetAwsResources {
        resources(
-         filter: "resourceType = aws_iam_user"
+         filter: "resourceType:tmod:@turbot/aws-ec2#/resource/types/instance timestamp:>T-24h tags:environment=prod"
        ) {
          items {
            turbot {
@@ -105,16 +127,14 @@ export async function handleBestPracticesPrompt(): Promise<GetPromptResult> {
      \`\`\`
 
 6. Pagination
-   - Use limit and paging arguments for large result sets
-   - Default limit is usually sufficient for exploration
-   - For complete data sets, use paging:
+   - Use the paging argument with the next token from previous results
+   - The paging token is returned in the paging.next field
+   - Example:
      \`\`\`graphql
-     query GetPaginatedResources(
-       $next: String
-     ) {
+     query GetPaginatedResources($nextToken: String) {
        resources(
-         filter: "resourceType = aws_iam_user"
-         paging: { next: $next }
+         filter: "resourceType:tmod:@turbot/aws-ec2#/resource/types/instance sort:title"
+         paging: $nextToken
        ) {
          items {
            turbot {
@@ -129,27 +149,12 @@ export async function handleBestPracticesPrompt(): Promise<GetPromptResult> {
      }
      \`\`\`
 
-7. Variables
-   - Use variables for dynamic values
-   - Name variables descriptively
-   - Provide default values when appropriate
-   - Example:
-     \`\`\`graphql
-     query GetResourcesByType(
-       $resourceType: String = "aws_iam_user"
-     ) {
-       resources(
-         filter: "resourceType = \${resourceType}"
-       ) {
-         items {
-           turbot {
-             id
-             title
-           }
-         }
-       }
-     }
-     \`\`\`
+7. Sorting
+   - Use sort: in filters
+   - Sort ascending: sort:title
+   - Sort descending: sort:-title
+   - Multiple sorts: sort:title,createTimestamp
+   - Example: filter: "resourceType:tmod:@turbot/aws-ec2#/resource/types/instance sort:title,-createTimestamp"
 
 8. Error Handling
    - Check for errors in the response
@@ -159,11 +164,13 @@ export async function handleBestPracticesPrompt(): Promise<GetPromptResult> {
 
 9. Performance Considerations
    - Request only needed fields
-   - Use appropriate filters
-   - Consider pagination for large result sets
-   - Use fragments to optimize repeated field selections`
+   - Use appropriate filters to reduce data transfer
+   - Use pagination for large result sets
+   - Use fragments to optimize repeated field selections
+   - Default limit is 20, can be changed with limit: in filter
+   - Example: filter: "resourceType:tmod:@turbot/aws-ec2#/resource/types/instance limit:100"`
         }
       }
     ]
   };
-} 
+}
