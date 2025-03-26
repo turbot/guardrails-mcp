@@ -14,18 +14,7 @@ interface PolicyType {
   turbot: {
     id: string;
   };
-  category: {
-    trunk: {
-      title: string;
-    } | null;
-    uri: string;
-  };
   targets: string[];
-  controlTypes: {
-    items: Array<{
-      uri: string;
-    }>;
-  };
 }
 
 interface QueryResponse {
@@ -69,17 +58,6 @@ export function registerListPolicyTypesTool(server: McpServer) {
                   id
                 }
                 targets
-                controlTypes(filter: "limit:5000") {
-                  items {
-                    uri
-                  }
-                }
-                category {
-                  trunk {
-                    title
-                  }
-                  uri
-                }
               }
             }
           }
@@ -98,12 +76,7 @@ export function registerListPolicyTypesTool(server: McpServer) {
           description: item.description,
           icon: item.icon,
           modUri: item.modUri,
-          targets: item.targets,
-          controlTypes: item.controlTypes.items.map(ct => ct.uri),
-          category: {
-            uri: item.category.uri,
-            trunkTitle: item.category.trunk?.title || null
-          }
+          targets: item.targets
         }));
 
         return {
