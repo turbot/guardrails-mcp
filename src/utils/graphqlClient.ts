@@ -13,9 +13,9 @@ export async function executeQuery(query: string, variables = {}) {
   try {
     const data = await graphqlClient.request(query, variables);
     return JSON.stringify(data, null, 2);
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error fetching Turbot resources:", error);
-    return "Failed to retrieve Turbot resources.";
+    return `Failed to retrieve Turbot resources: ${error.message || error}`;
   }
 }
 
