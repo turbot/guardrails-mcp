@@ -14,6 +14,7 @@ import { registerMutationTool } from "./tools/guardrails_mutation.js";
 import { registerListResourceTypesTool } from "./tools/list_guardrails_resource_types.js";
 import { registerListControlTypesTool } from "./tools/list_guardrails_control_types.js";
 import { registerListPolicyTypesTool } from "./tools/list_guardrails_policy_types.js";
+import { registerRunControlTool } from "./tools/run_guardrails_control.js";
 
 // Import prompt registrations
 import { registerPrompts } from "./prompts/index.js";
@@ -47,6 +48,7 @@ registerMutationTool(server);
 registerListResourceTypesTool(server);
 registerListControlTypesTool(server);
 registerListPolicyTypesTool(server);
+registerRunControlTool(server);
 
 // // Register prompts
 // registerResourcePrompts(server);
