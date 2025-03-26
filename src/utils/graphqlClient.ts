@@ -14,7 +14,7 @@ export async function executeQuery(query: string, variables = {}) {
     const data = await graphqlClient.request(query, variables);
     return JSON.stringify(data, null, 2);
   } catch (error) {
-    console.error("❌ Error fetching Turbot resources:", error);
+    console.error("Error fetching Turbot resources:", error);
     return "Failed to retrieve Turbot resources.";
   }
 }
@@ -25,7 +25,7 @@ export async function executeMutation(mutation: string, variables = {}) {
     const data = await graphqlClient.request(mutation, variables);
     return JSON.stringify(data, null, 2);
   } catch (error) {
-    console.error("❌ Error executing mutation:", error);
+    console.error("Error executing mutation:", error);
     throw error;
   }
 }
