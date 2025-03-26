@@ -12,6 +12,7 @@ const { TURBOT_GRAPHQL_ENDPOINT } = config;
 import { registerQueryTool } from "./tools/guardrails_query.js";
 import { registerMutationTool } from "./tools/guardrails_mutation.js";
 import { registerListResourceTypesTool } from "./tools/list_guardrails_resource_types.js";
+import { registerListControlTypesTool } from "./tools/list_guardrails_control_types.js";
 
 // Import prompt registrations
 import { registerPrompts } from "./prompts/index.js";
@@ -43,6 +44,7 @@ const server = new McpServer(
 registerQueryTool(server);
 registerMutationTool(server);
 registerListResourceTypesTool(server);
+registerListControlTypesTool(server);
 
 // // Register prompts
 // registerResourcePrompts(server);
