@@ -1,11 +1,10 @@
 import { GraphQLClient } from "graphql-request";
-import { Buffer } from "buffer";
 import config from "../config/env.js";
 
 // Create a singleton GraphQL client
 const graphqlClient = new GraphQLClient(config.TURBOT_GRAPHQL_ENDPOINT, {
   headers: {
-    authorization: "Basic " + Buffer.from(`${config.TURBOT_ACCESS_KEY_ID}:${config.TURBOT_SECRET_ACCESS_KEY}`).toString("base64"),
+    authorization: "Basic " + btoa(`${config.TURBOT_ACCESS_KEY_ID}:${config.TURBOT_SECRET_ACCESS_KEY}`),
   },
 });
 
