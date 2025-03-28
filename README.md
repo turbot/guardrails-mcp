@@ -40,7 +40,7 @@ The following resources were made available for reference:
 
 ## Tools
 
-### guardrails_query
+### query_guardrails
 
 Execute any GraphQL query with optional variables
 
@@ -56,13 +56,41 @@ Execute any GraphQL mutation with optional variables
   - query (string): The graphql mutation query to execute
   - variable (string)(Optional): Variable to pass to the mutation.
 
+### list_resource_types
+
+List all available resource types in Turbot Guardrails. Optionally filter the results using any valid Guardrails filter syntax.
+
+- Input:
+  - filter (string)(Optional): Filter to apply (e.g. 'category:storage' or 'title:/bucket/i')
+
+### list_control_types
+
+List all available control types in Turbot Guardrails. Optionally filter the results using any valid Guardrails filter syntax.
+
+- Input:
+  - filter (string)(Optional): Filter to apply (e.g. 'category:security' or 'title:/encryption/i')
+
+### list_policy_types
+
+List all available policy types in Turbot Guardrails. Optionally filter the results using any valid Guardrails filter syntax.
+
+- Input:
+  - filter (string)(Optional): Filter to apply (e.g. 'category:security' or 'title:/encryption/i')
+
+### run_control
+
+Run a Turbot Guardrails control by its ID.
+
+- Input:
+  - controlId (string): The ID of the control to run
+
 ## Prerequisites
 
 - Node.js 20 or higher
-- A [Turbot Guardrails API](https://turbot.com/guardrails/docs/guides/using-guardrails/iam/access-keys#generate-a-new-guardrails-api-access-key) key with alteast,
+- A [Turbot Guardrails API](https://turbot.com/guardrails/docs/guides/using-guardrails/iam/access-keys#generate-a-new-guardrails-api-access-key) key with at least:
 
-  - `Turbot/ReadOnly` permissions in order to use the "guardrails_query" tool.
-  - `Turbot/Operator` permissions in order to just execute the controls/policies using the "guardrails_mutation" tool.
+  - `Turbot/ReadOnly` permissions in order to use the "query_guardrails" tool and list tools.
+  - `Turbot/Operator` permissions in order to execute controls using the "run_control" tool.
   - `Turbot/Admin` permissions in order to create/update/delete resources, policy settings using the "guardrails_mutation" tool.
 
 - The endpoint URL for your Guardrails workspace
