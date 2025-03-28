@@ -25,7 +25,7 @@ interface QueryResponse {
 
 export function registerListPolicyTypesTool(server: McpServer) {
   server.tool(
-    "list_guardrails_policy_types",
+    "list_policy_types",
     "List all available policy types in Turbot Guardrails. Optionally filter the results using any valid Guardrails filter syntax.",
     {
       filter: z.string().optional().describe("Optional filter to apply (e.g. 'category:security' or 'title:/encryption/i')")

@@ -36,7 +36,7 @@ interface QueryResponse {
 
 export function registerListControlTypesTool(server: McpServer) {
   server.tool(
-    "list_guardrails_control_types",
+    "list_control_types",
     "List all available control types in Turbot Guardrails. Optionally filter the results using any valid Guardrails filter syntax.",
     {
       filter: z.string().optional().describe("Optional filter to apply (e.g. 'category:security' or 'title:/encryption/i')")

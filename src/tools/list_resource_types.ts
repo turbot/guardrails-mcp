@@ -30,7 +30,7 @@ interface QueryResponse {
 
 export function registerListResourceTypesTool(server: McpServer) {
   server.tool(
-    "list_guardrails_resource_types",
+    "list_resource_types",
     "List all available resource types in Turbot Guardrails. Optionally filter the results using any valid Guardrails filter syntax.",
     {
       filter: z.string().optional().describe("Optional filter to apply (e.g. 'category:storage' or 'title:/bucket/i')")

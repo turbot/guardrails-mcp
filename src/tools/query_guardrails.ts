@@ -5,7 +5,7 @@ import { parse, OperationDefinitionNode } from "graphql";
 
 export function registerQueryTool(server: McpServer) {
   server.tool(
-    "guardrails_query",
+    "query_guardrails",
     "Executes a GraphQL query to retrieve data.",
     {
       query: z.string().describe("GraphQL query string to execute"),
