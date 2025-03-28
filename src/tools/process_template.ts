@@ -2,9 +2,15 @@ import { z } from "zod";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import nunjucks from "nunjucks";
 import { parse as parseYaml } from "yaml";
+import { filters } from "../utils/nunjucksFilters.js";
 
-// Configure nunjucks
-nunjucks.configure({ autoescape: false, trimBlocks: true, lstripBlocks: true });
+// Configure nunjucks with custom filters
+const env = nunjucks.configure({ autoescape: false, trimBlocks: true, lstripBlocks: true });
+
+// Add all custom filters
+Object.entries(filters).forEach(([name, filter]) => {
+  env.addFilter(name, filter);
+});
 
 type ProcessTemplateInput = {
   template: string;
@@ -22,7 +28,7 @@ export function registerProcessTemplateTool(server: McpServer) {
     async ({ template, input }: ProcessTemplateInput) => {
       try {
         // Process the template with input data
-        const result = nunjucks.renderString(template, { $: input });
+        const result = env.renderString(template, { $: input });
 
         // Validate that the output is valid YAML
         try {
