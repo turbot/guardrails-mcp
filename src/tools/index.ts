@@ -7,6 +7,7 @@ import { registerListPolicyTypesTool } from "./list_policy_types.js";
 import { registerRunControlTool } from "./run_control.js";
 import { registerQueryRunnableTool } from "./query_runnable.js";
 import { registerQueryRunnableIntrospectionTool } from "./query_runnable_introspection.js";
+import { registerProcessTemplateTool } from "./process_template.js";
 
 export function registerTools(server: McpServer) {
   registerQueryTool(server);
@@ -17,4 +18,5 @@ export function registerTools(server: McpServer) {
   registerRunControlTool(server);
   registerQueryRunnableTool(server);
   registerQueryRunnableIntrospectionTool(server);
+  registerProcessTemplateTool(server);
 } 
