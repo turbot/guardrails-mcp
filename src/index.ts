@@ -63,9 +63,9 @@ async function main() {
     const transport = new StdioServerTransport();
     await server.connect(transport);
     // We use console.error instead of console.log since console.log will output to stdio, which will confuse the MCP server
-    console.error(colors.green('✅ Turbot Guardrails MCP Server running on stdio'));
-    console.error(colors.green('Server Version: 0.0.1'));
-    console.error(colors.green(`GraphQL Endpoint: ${TURBOT_GRAPHQL_ENDPOINT}`));
+    console.error('Turbot Guardrails MCP Server running on stdio');
+    console.error('Server Version: 0.0.1');
+    console.error(`GraphQL Endpoint: ${TURBOT_GRAPHQL_ENDPOINT}`);
   } catch (error) {
     console.error("Error starting server:", error);
     process.exit(1);
