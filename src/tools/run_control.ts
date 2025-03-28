@@ -38,7 +38,7 @@ interface RunControlResponse {
 
 export function registerRunControlTool(server: McpServer) {
   server.tool(
-    "run_guardrails_control",
+    "run_control",
     "Run a Turbot Guardrails control by its ID.",
     {
       controlId: z.string().describe("The ID of the control to run")
