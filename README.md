@@ -3,10 +3,13 @@
 <img src="https://badge.mcpx.dev?type=server" title="MCP Server"/> 
 <!-- <img src="https://badge.mcpx.dev?type=server&features=tools" title="MCP server with features/>&nbsp; -->
 
-Enable AI assistants like Claude to explore and query your Guardrails data! This Model Context Protocol (MCP) server lets AI tools:
+Enable AI assistants like Claude to explore, analyze, and interact with your Guardrails data! This Model Context Protocol (MCP) server provides powerful capabilities:
 
-- Execute a GraphQL query to retrieve data.
-- Execute a GraphQL mutation to create, update, or delete managing resources, policy settings, and executing controls/policies.
+- Query and analyze cloud resources using GraphQL
+- List and filter available resource types, control types, and policy types
+- Execute controls to assess cloud resource compliance
+- Explore GraphQL schemas for custom queries
+- Process templates using Nunjucks for dynamic configurations
 
 ## Demo
 
@@ -35,9 +38,6 @@ The following resources were made available for reference:
 - https://github.com/turbot/guardrails-samples/tree/main/queries
 - https://github.com/turbot/guardrails-samples/tree/main/policy_packs/aws/ec2 (For EBS volume policy pack demo)
 
-> [!WARNING]
-> Carefully review each mutation before allowing Claude to execute it.
-
 ## Tools
 
 ### query_guardrails
@@ -47,14 +47,6 @@ Execute any GraphQL query with optional variables
 - Input:
   - query (string): The graphql query to execute
   - variable (string)(Optional): Variable to pass to the query.
-
-### guardrails_mutation
-
-Execute any GraphQL mutation with optional variables
-
-- Input:
-  - query (string): The graphql mutation query to execute
-  - variable (string)(Optional): Variable to pass to the mutation.
 
 ### list_resource_types
 
@@ -91,7 +83,6 @@ Run a Turbot Guardrails control by its ID.
 
   - `Turbot/ReadOnly` permissions in order to use the "query_guardrails" tool and list tools.
   - `Turbot/Operator` permissions in order to execute controls using the "run_control" tool.
-  - `Turbot/Admin` permissions in order to create/update/delete resources, policy settings using the "guardrails_mutation" tool.
 
 - The endpoint URL for your Guardrails workspace
 

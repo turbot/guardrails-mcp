@@ -24,7 +24,7 @@ const server = new McpServer(
   {
     name: "guardrails",
     version: "0.0.1",
-    description: "Use Guardrails to explore and query cloud resources on Turbot Guardrails. Provides tools execute graphql query and mutation against your Turbot Gaurdrails workspace.",
+    description: "Use Guardrails to explore and query cloud resources on Turbot Guardrails. Provides tools to execute graphql queries against your Turbot Guardrails workspace.",
     vendor: "Turbot",
     homepage: "https://github.com/turbot/guardrails-mcp",
   },
