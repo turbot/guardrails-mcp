@@ -5,17 +5,13 @@ import type { Tool } from "@modelcontextprotocol/sdk/types.js";
 
 interface PolicyType {
   uri: string;
-  title: string;
   description: string | null;
-  icon: string;
-  modUri: string;
   trunk: {
     title: string;
   } | null;
   turbot: {
     id: string;
   };
-  targets: string[];
 }
 
 interface QueryResponse {
@@ -58,17 +54,13 @@ export const tool: Tool = {
           policyTypes(filter: $filters) {
             items {
               uri
-              title
               description
-              icon
-              modUri
               trunk {
                 title
               }
               turbot {
                 id
               }
-              targets
             }
           }
         }
@@ -83,11 +75,7 @@ export const tool: Tool = {
         id: item.turbot.id,
         trunkTitle: item.trunk?.title || null,
         uri: item.uri,
-        title: item.title,
-        description: item.description,
-        icon: item.icon,
-        modUri: item.modUri,
-        targets: item.targets
+        description: item.description
       }));
 
       return formatJsonToolResponse(transformedResult);
