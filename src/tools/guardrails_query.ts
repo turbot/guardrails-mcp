@@ -1,18 +1,18 @@
-import { z } from "zod";
 import { executeQuery } from "../utils/graphqlClient.js";
 import { logger } from '../services/logger.js';
 import { formatToolResponse, errorResponse } from '../utils/responseFormatter.mjs';
 import { parse, OperationDefinitionNode } from "graphql";
+import { JSONSchemaType } from 'ajv';
 
 type QueryToolInput = {
   query: string;
-  variables?: Record<string, any>;
+  variables?: Record<string, any> | null;
 };
 
 interface Tool {
   name: string;
   description: string;
-  schema: Record<string, z.ZodType>;
+  inputSchema: JSONSchemaType<QueryToolInput>;
   handler: (input: QueryToolInput) => Promise<{
     content: Array<{ type: "text"; text: string }>;
     isError?: boolean;
@@ -22,10 +22,23 @@ interface Tool {
 export const tool: Tool = {
   name: "guardrails_query",
   description: "Executes a GraphQL query to retrieve data.",
-  schema: {
-    query: z.string().describe("GraphQL query string to execute"),
-    variables: z.record(z.any()).optional().describe("Optional variables for the query")
-  },
+  inputSchema: {
+    type: "object",
+    properties: {
+      query: {
+        type: "string",
+        description: "GraphQL query string to execute"
+      },
+      variables: {
+        type: "object",
+        description: "Optional variables for the query",
+        additionalProperties: true,
+        nullable: true
+      }
+    },
+    required: ["query"],
+    additionalProperties: false
+  } as JSONSchemaType<QueryToolInput>,
   handler: async ({ query, variables = {} }: QueryToolInput) => {
     try {
       // Parse and validate the query
@@ -57,7 +70,7 @@ export const tool: Tool = {
       }
 
       // If we get here, it's a valid query
-      const result = await executeQuery(query, variables);
+      const result = await executeQuery(query, variables || {});
       logger.debug("Query executed successfully");
       return formatToolResponse(result);
     } catch (error: any) {

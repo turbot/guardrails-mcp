@@ -1,7 +1,7 @@
 import { executeQuery } from "../utils/graphqlClient.js";
-import { z } from "zod";
 import { logger } from '../services/logger.js';
 import { formatJsonToolResponse, errorResponse } from '../utils/responseFormatter.mjs';
+import { JSONSchemaType } from 'ajv';
 
 interface ControlType {
   uri: string;
@@ -33,22 +33,40 @@ interface QueryResponse {
   controlType: ControlType;
 }
 
-interface ShowControlTypeInput {
+type ShowControlTypeInput = {
   uri: string;
+};
+
+interface Tool {
+  name: string;
+  description: string;
+  inputSchema: JSONSchemaType<ShowControlTypeInput>;
+  handler: (input: ShowControlTypeInput) => Promise<{
+    content: Array<{ type: "text"; text: string }>;
+    isError?: boolean;
+  }>;
 }
 
-export const tool = {
+export const tool: Tool = {
   name: "guardrails_control_type_show",
-  description: "Show detailed information about a specific control type by its URI.",
-  schema: {
-    uri: z.string().describe("The URI of the control type to show details for")
-  },
+  description: "Show detailed information about a specific control type.",
+  inputSchema: {
+    type: "object",
+    properties: {
+      uri: {
+        type: "string",
+        description: "The URI of the control type to show"
+      }
+    },
+    required: ["uri"],
+    additionalProperties: false
+  } as JSONSchemaType<ShowControlTypeInput>,
   handler: async ({ uri }: ShowControlTypeInput) => {
-    logger.info("Starting guardrails_control_type_show tool execution");
+    logger.info("Starting show_guardrails_control_type tool execution");
     try {
       const query = `
-        query ShowControlType($id: ID!) {
-          controlType(id: $id) {
+        query ShowControlType($uri: String!) {
+          controlType(uri: $uri) {
             uri
             title
             description
@@ -60,51 +78,47 @@ export const tool = {
             turbot {
               id
             }
-            targets
-            actionTypes(filter: "limit:5000") {
-              items {
-                uri
-              }
-            }
             category {
               trunk {
                 title
               }
               uri
             }
+            targets
+            actionTypes {
+              items {
+                uri
+              }
+            }
           }
         }
       `;
 
-      logger.debug("Executing GraphQL query for control type:", uri);
-      const result = JSON.parse(await executeQuery(query, { id: uri })) as QueryResponse;
-      logger.debug("Query executed successfully");
-
-      if (!result.controlType) {
-        return errorResponse(`No control type found with URI: ${uri}`);
-      }
+      logger.debug("Executing GraphQL query with URI:", uri);
+      const result = JSON.parse(await executeQuery(query, { uri })) as QueryResponse;
+      logger.info("Query executed successfully");
 
       // Transform the response to flatten and reorganize fields
-      const item = result.controlType;
+      const controlType = result.controlType;
       const transformedResult = {
-        id: item.turbot.id,
-        trunkTitle: item.trunk?.title || null,
-        uri: item.uri,
-        title: item.title,
-        description: item.description,
-        icon: item.icon,
-        modUri: item.modUri,
+        id: controlType.turbot.id,
+        uri: controlType.uri,
+        title: controlType.title,
+        description: controlType.description,
+        icon: controlType.icon,
+        modUri: controlType.modUri,
+        trunkTitle: controlType.trunk?.title || null,
         category: {
-          uri: item.category.uri,
-          trunkTitle: item.category.trunk?.title || null
+          uri: controlType.category.uri,
+          title: controlType.category.trunk?.title || null
         },
-        targets: item.targets,
-        actionTypes: item.actionTypes.items.map(action => action.uri)
+        targets: controlType.targets,
+        actionTypes: controlType.actionTypes.items.map(item => item.uri)
       };
 
       return formatJsonToolResponse(transformedResult);
-    } catch (error: any) {
-      logger.error("Error in guardrails_control_type_show:", error);
+    } catch (error) {
+      logger.error("Error in show_guardrails_control_type:", error);
       const errorMessage = error instanceof Error ? 
         `${error.name}: ${error.message}` : 
         String(error);

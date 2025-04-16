@@ -1,12 +1,22 @@
-import { z } from "zod";
 import { executeQuery } from "../utils/graphqlClient.js";
 import { logger } from '../services/logger.js';
 import { formatJsonToolResponse, errorResponse } from '../utils/responseFormatter.mjs';
+import { JSONSchemaType } from 'ajv';
 
-interface QueryRunnableIntrospectionParams {
+type QueryRunnableIntrospectionParams = {
   runnableTypeUri: string;
-  section?: "queryType" | "types" | "type";
-  typeName?: string;
+  section?: "queryType" | "types" | "type" | null;
+  typeName?: string | null;
+};
+
+interface Tool {
+  name: string;
+  description: string;
+  inputSchema: JSONSchemaType<QueryRunnableIntrospectionParams>;
+  handler: (input: QueryRunnableIntrospectionParams) => Promise<{
+    content: Array<{ type: "text"; text: string }>;
+    isError?: boolean;
+  }>;
 }
 
 // Query to get the root query type and available types
@@ -86,14 +96,31 @@ const TYPE_DETAILS_QUERY = `
   }
 `;
 
-export const tool = {
+export const tool: Tool = {
   name: "guardrails_query_runnable_introspection",
   description: "Explore a runnable type's GraphQL schema in stages. Start with 'queryType' to see available fields, use 'types' to list all types, then use 'type' with a specific typeName to get detailed type information.",
-  schema: {
-    runnableTypeUri: z.string().describe("The URI of the runnable type (policy or control type)"),
-    section: z.enum(["queryType", "types", "type"]).optional().describe("Start with 'queryType' to see available fields, then use 'types' to list all types, finally use 'type' to inspect a specific type"),
-    typeName: z.string().optional().describe("Required when section is 'type': the name of a type discovered from the 'types' section"),
-  },
+  inputSchema: {
+    type: "object",
+    properties: {
+      runnableTypeUri: {
+        type: "string",
+        description: "The URI of the runnable type (policy or control type)"
+      },
+      section: {
+        type: "string",
+        description: "Start with 'queryType' to see available fields, then use 'types' to list all types, finally use 'type' to inspect a specific type",
+        enum: ["queryType", "types", "type"],
+        nullable: true
+      },
+      typeName: {
+        type: "string",
+        description: "Required when section is 'type': the name of a type discovered from the 'types' section",
+        nullable: true
+      }
+    },
+    required: ["runnableTypeUri"],
+    additionalProperties: false
+  } as JSONSchemaType<QueryRunnableIntrospectionParams>,
   handler: async ({ runnableTypeUri, section = "queryType", typeName }: QueryRunnableIntrospectionParams) => {
     try {
       // Construct the endpoint with query parameters

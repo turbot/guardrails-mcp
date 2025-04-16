@@ -1,7 +1,7 @@
 import { executeQuery } from "../utils/graphqlClient.js";
-import { z } from "zod";
 import { logger } from '../services/logger.js';
 import { formatJsonToolResponse, errorResponse } from '../utils/responseFormatter.mjs';
+import { JSONSchemaType } from 'ajv';
 
 interface PolicyType {
   uri: string;
@@ -20,20 +20,38 @@ interface PolicyType {
 
 interface QueryResponse {
   policyTypes: {
-    items: Array<PolicyType>;
+    items: PolicyType[];
   };
 }
 
 type ListPolicyTypesInput = {
-  filter?: string;
+  filter?: string | null;
 };
 
-export const tool = {
+interface Tool {
+  name: string;
+  description: string;
+  inputSchema: JSONSchemaType<ListPolicyTypesInput>;
+  handler: (input: ListPolicyTypesInput) => Promise<{
+    content: Array<{ type: "text"; text: string }>;
+    isError?: boolean;
+  }>;
+}
+
+export const tool: Tool = {
   name: "guardrails_policy_type_list",
   description: "List all available policy types in Turbot Guardrails. Optionally filter the results using any valid Guardrails filter syntax.",
-  schema: {
-    filter: z.string().optional().describe("Optional filter to apply (e.g. 'category:security' or 'title:/encryption/i')")
-  },
+  inputSchema: {
+    type: "object",
+    properties: {
+      filter: {
+        type: "string",
+        description: "Optional filter to apply (e.g. 'category:security' or 'title:/encryption/i')",
+        nullable: true
+      }
+    },
+    additionalProperties: false
+  } as JSONSchemaType<ListPolicyTypesInput>,
   handler: async ({ filter }: ListPolicyTypesInput) => {
     logger.info("Starting list_guardrails_policy_types tool execution");
     try {

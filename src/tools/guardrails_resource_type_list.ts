@@ -1,44 +1,53 @@
 import { executeQuery } from "../utils/graphqlClient.js";
-import { z } from "zod";
 import { logger } from '../services/logger.js';
 import { formatJsonToolResponse, errorResponse } from '../utils/responseFormatter.mjs';
+import { JSONSchemaType } from 'ajv';
 
 interface ResourceType {
   uri: string;
-  title: string;
   description: string | null;
-  icon: string;
-  modUri: string;
   trunk: {
     title: string;
   } | null;
   turbot: {
     id: string;
   };
-  category: {
-    trunk: {
-      title: string;
-    } | null;
-    uri: string;
-  };
 }
 
 interface QueryResponse {
   resourceTypes: {
-    items: Array<ResourceType>;
+    items: ResourceType[];
   };
 }
 
 type ListResourceTypesInput = {
-  filter?: string;
+  filter?: string | null;
 };
 
-export const tool = {
+interface Tool {
+  name: string;
+  description: string;
+  inputSchema: JSONSchemaType<ListResourceTypesInput>;
+  handler: (input: ListResourceTypesInput) => Promise<{
+    content: Array<{ type: "text"; text: string }>;
+    isError?: boolean;
+  }>;
+}
+
+export const tool: Tool = {
   name: "guardrails_resource_type_list",
   description: "List all available resource types in Turbot Guardrails. Optionally filter the results using any valid Guardrails filter syntax.",
-  schema: {
-    filter: z.string().optional().describe("Optional filter to apply (e.g. 'category:storage' or 'title:/bucket/i')")
-  },
+  inputSchema: {
+    type: "object",
+    properties: {
+      filter: {
+        type: "string",
+        description: "Optional filter to apply (e.g. 'category:security' or 'title:/encryption/i')",
+        nullable: true
+      }
+    },
+    additionalProperties: false
+  } as JSONSchemaType<ListResourceTypesInput>,
   handler: async ({ filter }: ListResourceTypesInput) => {
     logger.info("Starting list_guardrails_resource_types tool execution");
     try {
@@ -56,21 +65,12 @@ export const tool = {
           resourceTypes(filter: $filters) {
             items {
               uri
-              title
               description
-              icon
-              modUri
               trunk {
                 title
               }
               turbot {
                 id
-              }
-              category {
-                trunk {
-                  title
-                }
-                uri
               }
             }
           }
@@ -79,21 +79,14 @@ export const tool = {
 
       logger.debug("Executing GraphQL query with filters:", filters);
       const result = JSON.parse(await executeQuery(query, { filters })) as QueryResponse;
-      logger.debug("Query executed successfully");
+      logger.info("Query executed successfully");
 
       // Transform the response to flatten and reorganize fields
       const transformedResult = result.resourceTypes.items.map(item => ({
         id: item.turbot.id,
         trunkTitle: item.trunk?.title || null,
         uri: item.uri,
-        title: item.title,
-        description: item.description,
-        icon: item.icon,
-        modUri: item.modUri,
-        category: {
-          uri: item.category.uri,
-          trunkTitle: item.category.trunk?.title || null
-        }
+        description: item.description
       }));
 
       return formatJsonToolResponse(transformedResult);
