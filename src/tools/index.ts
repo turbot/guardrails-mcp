@@ -27,19 +27,31 @@ import { tool as guardrailsResourceShowTool } from "./guardrails_resource_show.j
 // Export all tools for server capabilities
 export const tools = {
   // Core Guardrails Operations
-  guardrails_query: queryTool,                    // Execute GraphQL queries
-  guardrails_resource_type_list: listResourceTypesTool,  // List resource types
-  guardrails_control_type_list: listControlTypesTool,    // List control types
-  guardrails_policy_type_list: listPolicyTypesTool,      // List policy types
-  guardrails_resource_list: listResourcesTool,           // List resources
-  guardrails_control_run: runControlTool,               // Run controls
-  guardrails_query_runnable: queryRunnableTool,         // Query runnable types
+  guardrails_query: queryTool,                                      // Execute GraphQL queries
+
+  // Resource Operations
+  guardrails_resource_list: listResourcesTool,                      // List resources
+  guardrails_resource_show: guardrailsResourceShowTool,             // Show resource details
+
+  // Resource Type Operations
+  guardrails_resource_type_list: listResourceTypesTool,             // List resource types
+  guardrails_resource_type_show: guardrailsResourceTypeShowTool,    // Show resource type details
+
+  // Control Type Operations
+  guardrails_control_type_list: listControlTypesTool,               // List control types
+  guardrails_control_type_show: guardrailsControlTypeShowTool,      // Show control type details
+
+  // Policy Type Operations
+  guardrails_policy_type_list: listPolicyTypesTool,                 // List policy types
+  guardrails_policy_type_show: guardrailsPolicyTypeShowTool,        // Show policy type details
+
+  // Control Operations
+  guardrails_control_run: runControlTool,                           // Run controls
+
+  // Query and Template Operations
+  guardrails_query_runnable: queryRunnableTool,                     // Query runnable types
   guardrails_query_runnable_introspection: queryRunnableIntrospectionTool,  // Introspect runnable types
-  guardrails_process_template: processTemplateTool,      // Process templates
-  guardrails_control_type_show: guardrailsControlTypeShowTool,  // Show control type details
-  guardrails_policy_type_show: guardrailsPolicyTypeShowTool,    // Show policy type details
-  guardrails_resource_type_show: guardrailsResourceTypeShowTool, // Show resource type details
-  guardrails_resource_show: guardrailsResourceShowTool    // Show resource details
+  guardrails_process_template: processTemplateTool,                  // Process templates
 };
 
 // Initialize tool handlers
