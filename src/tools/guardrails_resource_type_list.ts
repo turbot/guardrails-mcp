@@ -32,7 +32,7 @@ export const tool: Tool = {
     properties: {
       filter: {
         type: "string",
-        description: "Optional filter to apply (e.g. 'category:security' or 'title:/encryption/i')"
+        description: "Optional filter to apply (e.g. 'category:storage' or 'title:/bucket/i')"
       }
     },
     additionalProperties: false
@@ -68,7 +68,7 @@ export const tool: Tool = {
 
       logger.debug("Executing GraphQL query with filters:", filters);
       const result = JSON.parse(await executeQuery(query, { filters })) as QueryResponse;
-      logger.info("Query executed successfully");
+      logger.debug("Query executed successfully");
 
       // Transform the response to flatten and reorganize fields
       const transformedResult = result.resourceTypes.items.map(item => ({

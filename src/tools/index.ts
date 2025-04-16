@@ -20,6 +20,7 @@ import { tool as queryRunnableIntrospectionTool } from "./guardrails_query_runna
 import { tool as processTemplateTool } from "./guardrails_process_template.js";
 import { tool as guardrailsControlTypeShowTool } from "./guardrails_control_type_show.js";
 import { tool as guardrailsPolicyTypeShowTool } from "./guardrails_policy_type_show.js";
+import { tool as guardrailsResourceTypeShowTool } from "./guardrails_resource_type_show.js";
 
 // Export all tools for server capabilities
 export const tools = {
@@ -33,7 +34,8 @@ export const tools = {
   guardrails_query_runnable_introspection: queryRunnableIntrospectionTool,  // Introspect runnable types
   guardrails_process_template: processTemplateTool,      // Process templates
   guardrails_control_type_show: guardrailsControlTypeShowTool,  // Show control type details
-  guardrails_policy_type_show: guardrailsPolicyTypeShowTool    // Show policy type details
+  guardrails_policy_type_show: guardrailsPolicyTypeShowTool,    // Show policy type details
+  guardrails_resource_type_show: guardrailsResourceTypeShowTool // Show resource type details
 };
 
 // Initialize tool handlers
