@@ -1,6 +1,6 @@
 import { executeQuery } from "../utils/graphqlClient.js";
 import { logger } from '../services/logger.js';
-import { formatJsonToolResponse, errorResponse } from '../utils/responseFormatter.mjs';
+import { formatJsonToolResponse, errorResponse, formatGraphQLError } from '../utils/responseFormatter.mjs';
 import { JSONSchemaType } from 'ajv';
 
 interface ControlType {
@@ -34,7 +34,7 @@ interface QueryResponse {
 }
 
 type ShowControlTypeInput = {
-  uri: string;
+  id: string;
 };
 
 interface Tool {
@@ -53,20 +53,21 @@ export const tool: Tool = {
   inputSchema: {
     type: "object",
     properties: {
-      uri: {
+      id: {
         type: "string",
-        description: "The URI of the control type to show"
+        description: "The ID or URI of the control type to show (e.g. '320152411455166' or 'tmod:@turbot/azure-cisv2-0#/control/types/s01')",
+        minLength: 1
       }
     },
-    required: ["uri"],
+    required: ["id"],
     additionalProperties: false
   } as JSONSchemaType<ShowControlTypeInput>,
-  handler: async ({ uri }: ShowControlTypeInput) => {
+  handler: async ({ id }: ShowControlTypeInput) => {
     logger.info("Starting show_guardrails_control_type tool execution");
     try {
       const query = `
-        query ShowControlType($uri: String!) {
-          controlType(uri: $uri) {
+        query ShowControlType($id: ID!) {
+          controlType(id: $id) {
             uri
             title
             description
@@ -94,8 +95,8 @@ export const tool: Tool = {
         }
       `;
 
-      logger.debug("Executing GraphQL query with URI:", uri);
-      const result = JSON.parse(await executeQuery(query, { uri })) as QueryResponse;
+      logger.debug("Executing GraphQL query with ID:", id);
+      const result = JSON.parse(await executeQuery(query, { id })) as QueryResponse;
       logger.info("Query executed successfully");
 
       // Transform the response to flatten and reorganize fields
@@ -119,11 +120,7 @@ export const tool: Tool = {
       return formatJsonToolResponse(transformedResult);
     } catch (error) {
       logger.error("Error in show_guardrails_control_type:", error);
-      const errorMessage = error instanceof Error ? 
-        `${error.name}: ${error.message}` : 
-        String(error);
-      
-      return errorResponse(`Error showing control type: ${errorMessage}`);
+      return errorResponse(formatGraphQLError(error, id));
     }
   }
 }; 
