@@ -9,6 +9,19 @@ import { tool as queryRunnableIntrospectionTool } from "./guardrails_query_runna
 import { tool as processTemplateTool } from "./guardrails_process_template.js";
 import { tool as guardrailsControlTypeShowTool } from "./guardrails_control_type_show.js";
 import { logger } from "../services/logger.js";
+import { validateInput } from '../utils/validation.js';
+import { errorResponse } from '../utils/responseFormatter.mjs';
+import { JSONSchemaType } from 'ajv';
+
+interface BaseTool<T = unknown> {
+  name: string;
+  description: string;
+  inputSchema: JSONSchemaType<T>;
+  handler: (input: T) => Promise<{
+    content: Array<{ type: "text"; text: string }>;
+    isError?: boolean;
+  }>;
+}
 
 // Register all available tools
 const tools = [
@@ -21,7 +34,7 @@ const tools = [
   queryRunnableIntrospectionTool,
   processTemplateTool,
   guardrailsControlTypeShowTool
-];
+] as BaseTool[];
 
 // Export tools for server capabilities
 export const toolCapabilities = {
@@ -37,11 +50,24 @@ export function registerTools(server: McpServer) {
   // Register each tool
   tools.forEach(tool => {
     logger.debug(`Registering tool: ${tool.name}`);
+
+    // Create a wrapped handler that validates input
+    const wrappedHandler = async (input: unknown) => {
+      // Validate input against schema
+      const validation = validateInput(input, tool.inputSchema);
+      if (!validation.isValid) {
+        return errorResponse(`Invalid input: ${validation.errors.join(', ')}`);
+      }
+
+      // If validation passes, call the original handler
+      return tool.handler(input as any);
+    };
+
     server.tool(
       tool.name,
       tool.description,
-      tool.schema,
-      tool.handler
+      tool.inputSchema,
+      wrappedHandler
     );
   });
 } 
