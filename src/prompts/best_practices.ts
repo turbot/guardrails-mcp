@@ -1,18 +1,16 @@
 import { GetPromptResult } from "@modelcontextprotocol/sdk/types.js";
 
-export const BEST_PRACTICES_PROMPT = {
+export const prompt = {
   name: "best_practices",
   description: "Best practices for writing Turbot Guardrails GraphQL queries",
-} as const;
-
-export async function handleBestPracticesPrompt(): Promise<GetPromptResult> {
-  return {
-    messages: [
-      {
-        role: "user",
-        content: {
-          type: "text",
-          text: `When writing GraphQL queries for Turbot Guardrails, follow these essential best practices:
+  handler: async (): Promise<GetPromptResult> => {
+    return {
+      messages: [
+        {
+          role: "user",
+          content: {
+            type: "text",
+            text: `When writing GraphQL queries for Turbot Guardrails, follow these essential best practices:
 
 1. Response Style
    - Always return results in a clear, formatted structure
@@ -24,7 +22,7 @@ export async function handleBestPracticesPrompt(): Promise<GetPromptResult> {
    - Use fragments for reusable field selections
    - Nest queries appropriately to get related data
    - Use aliases when querying the same type multiple times
-   - Example of a well-structured query:
+   - Example:
      \`\`\`graphql
      fragment resourceFields on Resource {
        turbot {
@@ -169,8 +167,9 @@ export async function handleBestPracticesPrompt(): Promise<GetPromptResult> {
    - Use fragments to optimize repeated field selections
    - Default limit is 20, can be changed with limit: in filter
    - Example: filter: "resourceType:tmod:@turbot/aws-ec2#/resource/types/instance limit:100"`
+          }
         }
-      }
-    ]
-  };
-}
+      ]
+    };
+  }
+} as const;

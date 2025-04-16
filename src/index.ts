@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
@@ -5,6 +7,7 @@ import { Buffer } from "buffer";
 import colors from "colors";
 import { GraphQLClient } from "graphql-request";
 import config from "./config/env.js";
+import { logger } from "./services/logger.js";
 
 const { TURBOT_GRAPHQL_ENDPOINT } = config;
 
@@ -12,7 +15,7 @@ const { TURBOT_GRAPHQL_ENDPOINT } = config;
 import { registerTools } from "./tools/index.js";
 
 // Import prompt registrations
-import { registerPrompts } from "./prompts/index.js";
+import { registerPrompts, promptCapabilities } from "./prompts/index.js";
 
 // // Import prompt registrations
 // import { registerResourcePrompts } from "./prompts/resourceAnalysis.js";
@@ -31,7 +34,7 @@ const server = new McpServer(
   {
     capabilities: {
       tools: {},
-      prompts: {},
+      prompts: promptCapabilities.prompts,
       resources: {},
     }
   }
@@ -52,17 +55,16 @@ async function main() {
   try {
     const transport = new StdioServerTransport();
     await server.connect(transport);
-    // We use console.error instead of console.log since console.log will output to stdio, which will confuse the MCP server
-    console.error('Turbot Guardrails MCP Server running on stdio');
-    console.error('Server Version: 0.0.1');
-    console.error(`GraphQL Endpoint: ${TURBOT_GRAPHQL_ENDPOINT}`);
+    logger.info('Turbot Guardrails MCP Server running on stdio');
+    logger.info('Server Version: 0.0.1');
+    logger.info(`GraphQL Endpoint: ${TURBOT_GRAPHQL_ENDPOINT}`);
   } catch (error) {
-    console.error("Error starting server:", error);
+    logger.error("Error starting server:", error);
     process.exit(1);
   }
 }
 
 main().catch(error => {
-  console.error("Fatal error in main():", error);
+  logger.error("Fatal error in main():", error);
   process.exit(1);
 });
