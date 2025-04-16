@@ -152,11 +152,16 @@ export const tool: Tool = {
       return formatJsonToolResponse(transformedResult);
     } catch (error) {
       logger.error("Error in run_guardrails_control:", error);
-      const errorMessage = error instanceof Error ? 
-        `${error.name}: ${error.message}` : 
-        String(error);
       
-      return errorResponse(`Error running control: ${errorMessage}`);
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      
+      // Check for specific error patterns and provide friendly messages
+      if (errorMessage.includes('Not Found')) {
+        return errorResponse(`Control '${id}' not found. Please verify the control ID is correct and try again.`);
+      }
+      
+      // For other errors, provide a more generic but still friendly message
+      return errorResponse(`Unable to run control: ${errorMessage}`);
     }
   }
 }; 
