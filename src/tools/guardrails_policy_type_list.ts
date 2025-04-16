@@ -1,5 +1,6 @@
 import { executeQuery } from "../utils/graphqlClient.js";
 import { z } from "zod";
+import { logger } from '../services/logger.js';
 
 interface PolicyType {
   uri: string;
@@ -33,7 +34,7 @@ export const tool = {
     filter: z.string().optional().describe("Optional filter to apply (e.g. 'category:security' or 'title:/encryption/i')")
   },
   handler: async ({ filter }: ListPolicyTypesInput) => {
-    console.error("Starting list_guardrails_policy_types tool execution");
+    logger.info("Starting list_guardrails_policy_types tool execution");
     try {
       // Build array of filters
       const filters = ["limit:5000"];
@@ -41,7 +42,7 @@ export const tool = {
       // If a filter is provided, add it to the filters array
       if (filter) {
         filters.push(filter);
-        console.error(`Added user filter: ${filter}`);
+        logger.debug(`Added user filter: ${filter}`);
       }
 
       const query = `
@@ -65,9 +66,9 @@ export const tool = {
         }
       `;
 
-      console.error("Executing GraphQL query with filters:", filters);
+      logger.debug("Executing GraphQL query with filters:", filters);
       const result = JSON.parse(await executeQuery(query, { filters })) as QueryResponse;
-      console.error("Query executed successfully");
+      logger.debug("Query executed successfully");
 
       // Transform the response to flatten and reorganize fields
       const transformedResult = result.policyTypes.items.map(item => ({
@@ -90,7 +91,7 @@ export const tool = {
         ],
       };
     } catch (error) {
-      console.error("Error in list_guardrails_policy_types:", error);
+      logger.error("Error in list_guardrails_policy_types:", error);
       const errorMessage = error instanceof Error ? 
         `${error.name}: ${error.message}` : 
         String(error);

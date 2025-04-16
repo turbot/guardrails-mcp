@@ -1,5 +1,6 @@
 import { executeQuery } from "../utils/graphqlClient.js";
 import { z } from "zod";
+import { logger } from '../services/logger.js';
 
 interface ControlType {
   uri: string;
@@ -42,7 +43,7 @@ export const tool = {
     uri: z.string().describe("The URI of the control type to show details for")
   },
   handler: async ({ uri }: ShowControlTypeInput) => {
-    console.error("Starting guardrails_control_type_show tool execution");
+    logger.info("Starting guardrails_control_type_show tool execution");
     try {
       const query = `
         query ShowControlType($id: ID!) {
@@ -74,9 +75,9 @@ export const tool = {
         }
       `;
 
-      console.error("Executing GraphQL query for control type:", uri);
+      logger.debug("Executing GraphQL query for control type:", uri);
       const result = JSON.parse(await executeQuery(query, { id: uri })) as QueryResponse;
-      console.error("Query executed successfully");
+      logger.debug("Query executed successfully");
 
       if (!result.controlType) {
         return {
@@ -117,7 +118,7 @@ export const tool = {
         ]
       };
     } catch (error: any) {
-      console.error("Error in guardrails_control_type_show:", error);
+      logger.error("Error in guardrails_control_type_show:", error);
       const errorMessage = error instanceof Error ? 
         `${error.name}: ${error.message}` : 
         String(error);

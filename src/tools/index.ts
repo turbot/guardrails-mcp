@@ -1,7 +1,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { tool as queryTool } from "./guardrails_query.js";
 import { tool as listResourceTypesTool } from "./guardrails_resource_type_list.js";
-import { tool as listControlTypesTool } from "./list_control_types.js";
+import { tool as listControlTypesTool } from "./guardrails_control_type_list.js";
 import { tool as listPolicyTypesTool } from "./guardrails_policy_type_list.js";
 import { tool as runControlTool } from "./guardrails_control_run.js";
 import { tool as queryRunnableTool } from "./guardrails_query_runnable.js";

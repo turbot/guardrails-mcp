@@ -1,29 +1,15 @@
 import { executeQuery } from "../utils/graphqlClient.js";
 import { z } from "zod";
+import { logger } from '../services/logger.js';
 
 interface ControlType {
   uri: string;
-  title: string;
   description: string | null;
-  icon: string;
-  modUri: string;
   trunk: {
     title: string;
   } | null;
   turbot: {
     id: string;
-  };
-  category: {
-    trunk: {
-      title: string;
-    } | null;
-    uri: string;
-  };
-  targets: string[];
-  actionTypes: {
-    items: Array<{
-      uri: string;
-    }>;
   };
 }
 
@@ -44,7 +30,7 @@ export const tool = {
     filter: z.string().optional().describe("Optional filter to apply (e.g. 'category:security' or 'title:/encryption/i')")
   },
   handler: async ({ filter }: ListControlTypesInput) => {
-    console.error("Starting list_guardrails_control_types tool execution");
+    logger.info("Starting list_guardrails_control_types tool execution");
     try {
       // Build array of filters
       const filters = ["limit:5000"];
@@ -52,7 +38,7 @@ export const tool = {
       // If a filter is provided, add it to the filters array
       if (filter) {
         filters.push(filter);
-        console.error(`Added user filter: ${filter}`);
+        logger.debug(`Added user filter: ${filter}`);
       }
 
       const query = `
@@ -60,52 +46,28 @@ export const tool = {
           controlTypes(filter: $filters) {
             items {
               uri
-              title
               description
-              icon
-              modUri
               trunk {
                 title
               }
               turbot {
                 id
               }
-              targets
-              actionTypes(filter: "limit:5000") {
-                items {
-                  uri
-                }
-              }
-              category {
-                  trunk {
-                  title
-                }
-                uri
-              }
             }
           }
         }
       `;
 
-      console.error("Executing GraphQL query with filters:", filters);
+      logger.debug("Executing GraphQL query with filters:", filters);
       const result = JSON.parse(await executeQuery(query, { filters })) as QueryResponse;
-      console.error("Query executed successfully");
+      logger.info("Query executed successfully");
 
       // Transform the response to flatten and reorganize fields
       const transformedResult = result.controlTypes.items.map(item => ({
         id: item.turbot.id,
         trunkTitle: item.trunk?.title || null,
         uri: item.uri,
-        title: item.title,
-        description: item.description,
-        icon: item.icon,
-        modUri: item.modUri,
-        targets: item.targets,
-        actionTypes: item.actionTypes.items.map(at => at.uri),
-        category: {
-          uri: item.category.uri,
-          trunkTitle: item.category.trunk?.title || null
-        }
+        description: item.description
       }));
 
       return {
@@ -117,7 +79,7 @@ export const tool = {
         ],
       };
     } catch (error) {
-      console.error("Error in list_guardrails_control_types:", error);
+      logger.error("Error in list_guardrails_control_types:", error);
       const errorMessage = error instanceof Error ? 
         `${error.name}: ${error.message}` : 
         String(error);

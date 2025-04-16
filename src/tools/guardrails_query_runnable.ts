@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { executeQuery } from "../utils/graphqlClient.js";
+import { logger } from '../services/logger.js';
 
 interface QueryRunnableParams {
   runnableTypeUri: string;
@@ -32,7 +33,7 @@ export const tool = {
         ]
       };
     } catch (error: any) {
-      console.error(`Error executing query against runnable type: ${error.message}`);
+      logger.error(`Error executing query against runnable type: ${error.message}`);
       return {
         isError: true,
         content: [
