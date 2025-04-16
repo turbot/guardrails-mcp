@@ -14,6 +14,7 @@ import { tool as queryTool } from "./guardrails_query.js";
 import { tool as listResourceTypesTool } from "./guardrails_resource_type_list.js";
 import { tool as listControlTypesTool } from "./guardrails_control_type_list.js";
 import { tool as listPolicyTypesTool } from "./guardrails_policy_type_list.js";
+import { tool as listResourcesTool } from "./guardrails_resource_list.js";
 import { tool as runControlTool } from "./guardrails_control_run.js";
 import { tool as queryRunnableTool } from "./guardrails_query_runnable.js";
 import { tool as queryRunnableIntrospectionTool } from "./guardrails_query_runnable_introspection.js";
@@ -21,6 +22,7 @@ import { tool as processTemplateTool } from "./guardrails_process_template.js";
 import { tool as guardrailsControlTypeShowTool } from "./guardrails_control_type_show.js";
 import { tool as guardrailsPolicyTypeShowTool } from "./guardrails_policy_type_show.js";
 import { tool as guardrailsResourceTypeShowTool } from "./guardrails_resource_type_show.js";
+import { tool as guardrailsResourceShowTool } from "./guardrails_resource_show.js";
 
 // Export all tools for server capabilities
 export const tools = {
@@ -29,13 +31,15 @@ export const tools = {
   guardrails_resource_type_list: listResourceTypesTool,  // List resource types
   guardrails_control_type_list: listControlTypesTool,    // List control types
   guardrails_policy_type_list: listPolicyTypesTool,      // List policy types
+  guardrails_resource_list: listResourcesTool,           // List resources
   guardrails_control_run: runControlTool,               // Run controls
   guardrails_query_runnable: queryRunnableTool,         // Query runnable types
   guardrails_query_runnable_introspection: queryRunnableIntrospectionTool,  // Introspect runnable types
   guardrails_process_template: processTemplateTool,      // Process templates
   guardrails_control_type_show: guardrailsControlTypeShowTool,  // Show control type details
   guardrails_policy_type_show: guardrailsPolicyTypeShowTool,    // Show policy type details
-  guardrails_resource_type_show: guardrailsResourceTypeShowTool // Show resource type details
+  guardrails_resource_type_show: guardrailsResourceTypeShowTool, // Show resource type details
+  guardrails_resource_show: guardrailsResourceShowTool    // Show resource details
 };
 
 // Initialize tool handlers
