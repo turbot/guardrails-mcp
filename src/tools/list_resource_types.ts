@@ -1,4 +1,3 @@
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { executeQuery } from "../utils/graphqlClient.js";
 import { z } from "zod";
 
@@ -28,94 +27,96 @@ interface QueryResponse {
   };
 }
 
-export function registerListResourceTypesTool(server: McpServer) {
-  server.tool(
-    "list_resource_types",
-    "List all available resource types in Turbot Guardrails. Optionally filter the results using any valid Guardrails filter syntax.",
-    {
-      filter: z.string().optional().describe("Optional filter to apply (e.g. 'category:storage' or 'title:/bucket/i')")
-    },
-    async ({ filter }) => {
-      console.error("Starting list_guardrails_resource_types tool execution");
-      try {
-        // Build array of filters
-        const filters = ["limit:5000"];
-        
-        // If a filter is provided, add it to the filters array
-        if (filter) {
-          filters.push(filter);
-          console.error(`Added user filter: ${filter}`);
-        }
+type ListResourceTypesInput = {
+  filter?: string;
+};
 
-        const query = `
-          query ListResourceTypes($filters: [String!]!) {
-            resourceTypes(filter: $filters) {
-              items {
-                uri
+export const tool = {
+  name: "list_resource_types",
+  description: "List all available resource types in Turbot Guardrails. Optionally filter the results using any valid Guardrails filter syntax.",
+  schema: {
+    filter: z.string().optional().describe("Optional filter to apply (e.g. 'category:storage' or 'title:/bucket/i')")
+  },
+  handler: async ({ filter }: ListResourceTypesInput) => {
+    console.error("Starting list_guardrails_resource_types tool execution");
+    try {
+      // Build array of filters
+      const filters = ["limit:5000"];
+      
+      // If a filter is provided, add it to the filters array
+      if (filter) {
+        filters.push(filter);
+        console.error(`Added user filter: ${filter}`);
+      }
+
+      const query = `
+        query ListResourceTypes($filters: [String!]!) {
+          resourceTypes(filter: $filters) {
+            items {
+              uri
+              title
+              description
+              icon
+              modUri
+              trunk {
                 title
-                description
-                icon
-                modUri
+              }
+              turbot {
+                id
+              }
+              category {
                 trunk {
                   title
                 }
-                turbot {
-                  id
-                }
-                category {
-                  trunk {
-                    title
-                  }
-                  uri
-                }
+                uri
               }
             }
           }
-        `;
+        }
+      `;
 
-        console.error("Executing GraphQL query with filters:", filters);
-        const result = JSON.parse(await executeQuery(query, { filters })) as QueryResponse;
-        console.error("Query executed successfully");
+      console.error("Executing GraphQL query with filters:", filters);
+      const result = JSON.parse(await executeQuery(query, { filters })) as QueryResponse;
+      console.error("Query executed successfully");
 
-        // Transform the response to flatten and reorganize fields
-        const transformedResult = result.resourceTypes.items.map(item => ({
-          id: item.turbot.id,
-          trunkTitle: item.trunk?.title || null,
-          uri: item.uri,
-          title: item.title,
-          description: item.description,
-          icon: item.icon,
-          modUri: item.modUri,
-          category: {
-            uri: item.category.uri,
-            trunkTitle: item.category.trunk?.title || null
-          }
-        }));
+      // Transform the response to flatten and reorganize fields
+      const transformedResult = result.resourceTypes.items.map(item => ({
+        id: item.turbot.id,
+        trunkTitle: item.trunk?.title || null,
+        uri: item.uri,
+        title: item.title,
+        description: item.description,
+        icon: item.icon,
+        modUri: item.modUri,
+        category: {
+          uri: item.category.uri,
+          trunkTitle: item.category.trunk?.title || null
+        }
+      }));
 
-        return {
-          content: [
-            {
-              type: "text",
-              text: JSON.stringify(transformedResult, null, 2),
-            },
-          ],
-        };
-      } catch (error) {
-        console.error("Error in list_guardrails_resource_types:", error);
-        const errorMessage = error instanceof Error ? 
-          `${error.name}: ${error.message}` : 
-          String(error);
-        
-        return {
-          content: [
-            {
-              type: "text",
-              text: `Error listing resource types: ${errorMessage}`,
-            },
-          ],
-          isError: true,
-        };
-      }
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: JSON.stringify(transformedResult, null, 2),
+          },
+        ],
+      };
+    } catch (error) {
+      console.error("Error in list_guardrails_resource_types:", error);
+      const errorMessage = error instanceof Error ? 
+        `${error.name}: ${error.message}` : 
+        String(error);
+      
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: `Error listing resource types: ${errorMessage}`,
+          },
+        ],
+        isError: true,
+      };
     }
-  );
-} 
+  }
+}; 

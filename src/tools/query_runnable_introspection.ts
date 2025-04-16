@@ -1,4 +1,3 @@
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { executeQuery } from "../utils/graphqlClient.js";
 
@@ -85,61 +84,67 @@ const TYPE_DETAILS_QUERY = `
   }
 `;
 
-export function registerQueryRunnableIntrospectionTool(server: McpServer) {
-  server.tool(
-    "explore_runnable_schema",
-    "Explore a runnable type's GraphQL schema in stages. Start with 'queryType' to see available fields, use 'types' to list all types, then use 'type' with a specific typeName to get detailed type information.",
-    {
-      runnableTypeUri: z.string().describe("The URI of the runnable type (policy or control type)"),
-      section: z.enum(["queryType", "types", "type"]).optional().describe("Start with 'queryType' to see available fields, then use 'types' to list all types, finally use 'type' to inspect a specific type"),
-      typeName: z.string().optional().describe("Required when section is 'type': the name of a type discovered from the 'types' section"),
-    },
-    async ({ runnableTypeUri, section = "queryType", typeName }: QueryRunnableIntrospectionParams) => {
-      try {
-        // Construct the endpoint with query parameters
-        const endpoint = `/api/v5/graphql?runnableTypeUri=${encodeURIComponent(runnableTypeUri)}`;
+export const tool = {
+  name: "explore_runnable_schema",
+  description: "Explore a runnable type's GraphQL schema in stages. Start with 'queryType' to see available fields, use 'types' to list all types, then use 'type' with a specific typeName to get detailed type information.",
+  schema: {
+    runnableTypeUri: z.string().describe("The URI of the runnable type (policy or control type)"),
+    section: z.enum(["queryType", "types", "type"]).optional().describe("Start with 'queryType' to see available fields, then use 'types' to list all types, finally use 'type' to inspect a specific type"),
+    typeName: z.string().optional().describe("Required when section is 'type': the name of a type discovered from the 'types' section"),
+  },
+  handler: async ({ runnableTypeUri, section = "queryType", typeName }: QueryRunnableIntrospectionParams) => {
+    try {
+      // Construct the endpoint with query parameters
+      const endpoint = `/api/v5/graphql?runnableTypeUri=${encodeURIComponent(runnableTypeUri)}`;
 
-        if (section === "type" && !typeName) {
-          throw new Error("typeName is required when section is 'type'. First use section: 'types' to discover available type names.");
-        }
-
-        const query = section === "type" ? TYPE_DETAILS_QUERY : ROOT_SCHEMA_QUERY;
-        const variables = section === "type" ? { typeName } : {};
-
-        const result = await executeQuery(query, variables, endpoint);
-        // Parse the JSON string returned by executeQuery
-        const data = JSON.parse(result);
-
-        // Filter the response based on the requested section
-        let filteredData;
-        let guidance = "";
-        if (section === "queryType") {
-          filteredData = data.__schema.queryType;
-          guidance = "These are the available fields at the root of the schema. To explore a type in detail, first use section: 'types' to list all types.";
-        } else if (section === "types") {
-          filteredData = data.__schema.types;
-          guidance = "These are all available types in the schema. To explore a specific type, use section: 'type' with typeName set to one of these type names.";
-        } else {
-          filteredData = data.__type;
-          guidance = "This is the detailed information for the requested type.";
-        }
-
-        return {
-          content: [
-            {
-              type: "text",
-              text: guidance
-            },
-            {
-              type: "text",
-              text: JSON.stringify(filteredData, null, 2)
-            }
-          ]
-        };
-      } catch (error: any) {
-        console.error(`Error executing introspection query: ${error.message}`);
-        throw error;
+      if (section === "type" && !typeName) {
+        throw new Error("typeName is required when section is 'type'. First use section: 'types' to discover available type names.");
       }
+
+      const query = section === "type" ? TYPE_DETAILS_QUERY : ROOT_SCHEMA_QUERY;
+      const variables = section === "type" ? { typeName } : {};
+
+      const result = await executeQuery(query, variables, endpoint);
+      // Parse the JSON string returned by executeQuery
+      const data = JSON.parse(result);
+
+      // Filter the response based on the requested section
+      let filteredData;
+      let guidance = "";
+      if (section === "queryType") {
+        filteredData = data.__schema.queryType;
+        guidance = "These are the available fields at the root of the schema. To explore a type in detail, first use section: 'types' to list all types.";
+      } else if (section === "types") {
+        filteredData = data.__schema.types;
+        guidance = "These are all available types in the schema. To explore a specific type, use section: 'type' with typeName set to one of these type names.";
+      } else {
+        filteredData = data.__type;
+        guidance = "This is the detailed information for the requested type.";
+      }
+
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: guidance
+          },
+          {
+            type: "text" as const,
+            text: JSON.stringify(filteredData, null, 2)
+          }
+        ]
+      };
+    } catch (error: any) {
+      console.error(`Error executing introspection query: ${error.message}`);
+      return {
+        isError: true,
+        content: [
+          {
+            type: "text" as const,
+            text: error.message
+          }
+        ]
+      };
     }
-  );
-} 
+  }
+}; 
