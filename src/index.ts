@@ -2,17 +2,13 @@
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { z } from "zod";
-import { Buffer } from "buffer";
-import colors from "colors";
-import { GraphQLClient } from "graphql-request";
 import config from "./config/env.js";
 import { logger } from "./services/logger.js";
 
 const { TURBOT_GRAPHQL_ENDPOINT } = config;
 
 // Import tool registrations
-import { registerTools } from "./tools/index.js";
+import { setupTools } from "./tools/index.js";
 
 // Import prompt registrations
 import { registerPrompts, promptCapabilities } from "./prompts/index.js";
@@ -41,7 +37,7 @@ const server = new McpServer(
 );
 
 // Register tools
-registerTools(server);
+setupTools(server.server);
 
 // // Register prompts
 // registerResourcePrompts(server);
