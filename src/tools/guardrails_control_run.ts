@@ -40,7 +40,7 @@ type RunControlInput = {
 };
 
 export const tool = {
-  name: "run_control",
+  name: "guardrails_control_run",
   description: "Run a Turbot Guardrails control by its ID.",
   schema: {
     controlId: z.string().describe("The ID of the control to run")

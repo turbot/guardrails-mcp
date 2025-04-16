@@ -1,7 +1,7 @@
 import { executeQuery } from "../utils/graphqlClient.js";
 import { z } from "zod";
 
-interface ResourceType {
+interface PolicyType {
   uri: string;
   title: string;
   description: string | null;
@@ -13,32 +13,27 @@ interface ResourceType {
   turbot: {
     id: string;
   };
-  category: {
-    trunk: {
-      title: string;
-    } | null;
-    uri: string;
-  };
+  targets: string[];
 }
 
 interface QueryResponse {
-  resourceTypes: {
-    items: Array<ResourceType>;
+  policyTypes: {
+    items: Array<PolicyType>;
   };
 }
 
-type ListResourceTypesInput = {
+type ListPolicyTypesInput = {
   filter?: string;
 };
 
 export const tool = {
-  name: "list_resource_types",
-  description: "List all available resource types in Turbot Guardrails. Optionally filter the results using any valid Guardrails filter syntax.",
+  name: "guardrails_policy_type_list",
+  description: "List all available policy types in Turbot Guardrails. Optionally filter the results using any valid Guardrails filter syntax.",
   schema: {
-    filter: z.string().optional().describe("Optional filter to apply (e.g. 'category:storage' or 'title:/bucket/i')")
+    filter: z.string().optional().describe("Optional filter to apply (e.g. 'category:security' or 'title:/encryption/i')")
   },
-  handler: async ({ filter }: ListResourceTypesInput) => {
-    console.error("Starting list_guardrails_resource_types tool execution");
+  handler: async ({ filter }: ListPolicyTypesInput) => {
+    console.error("Starting list_guardrails_policy_types tool execution");
     try {
       // Build array of filters
       const filters = ["limit:5000"];
@@ -50,8 +45,8 @@ export const tool = {
       }
 
       const query = `
-        query ListResourceTypes($filters: [String!]!) {
-          resourceTypes(filter: $filters) {
+        query ListPolicyTypes($filters: [String!]!) {
+          policyTypes(filter: $filters) {
             items {
               uri
               title
@@ -64,12 +59,7 @@ export const tool = {
               turbot {
                 id
               }
-              category {
-                trunk {
-                  title
-                }
-                uri
-              }
+              targets
             }
           }
         }
@@ -80,7 +70,7 @@ export const tool = {
       console.error("Query executed successfully");
 
       // Transform the response to flatten and reorganize fields
-      const transformedResult = result.resourceTypes.items.map(item => ({
+      const transformedResult = result.policyTypes.items.map(item => ({
         id: item.turbot.id,
         trunkTitle: item.trunk?.title || null,
         uri: item.uri,
@@ -88,10 +78,7 @@ export const tool = {
         description: item.description,
         icon: item.icon,
         modUri: item.modUri,
-        category: {
-          uri: item.category.uri,
-          trunkTitle: item.category.trunk?.title || null
-        }
+        targets: item.targets
       }));
 
       return {
@@ -103,7 +90,7 @@ export const tool = {
         ],
       };
     } catch (error) {
-      console.error("Error in list_guardrails_resource_types:", error);
+      console.error("Error in list_guardrails_policy_types:", error);
       const errorMessage = error instanceof Error ? 
         `${error.name}: ${error.message}` : 
         String(error);
@@ -112,7 +99,7 @@ export const tool = {
         content: [
           {
             type: "text" as const,
-            text: `Error listing resource types: ${errorMessage}`,
+            text: `Error listing policy types: ${errorMessage}`,
           },
         ],
         isError: true,

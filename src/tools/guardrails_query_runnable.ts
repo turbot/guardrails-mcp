@@ -9,7 +9,7 @@ interface QueryRunnableParams {
 }
 
 export const tool = {
-  name: "query_runnable",
+  name: "guardrails_query_runnable",
   description: "Executes a GraphQL query against a specific runnable type URI, optionally using a resource ID for context",
   schema: {
     runnableTypeUri: z.string().describe("The URI of the runnable type (policy or control type)"),

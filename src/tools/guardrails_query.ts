@@ -7,8 +7,18 @@ type QueryToolInput = {
   variables?: Record<string, any>;
 };
 
-export const tool = {
-  name: "query_guardrails",
+interface Tool {
+  name: string;
+  description: string;
+  schema: Record<string, z.ZodType>;
+  handler: (input: QueryToolInput) => Promise<{
+    content: Array<{ type: "text"; text: string }>;
+    isError?: boolean;
+  }>;
+}
+
+export const tool: Tool = {
+  name: "guardrails_query",
   description: "Executes a GraphQL query to retrieve data.",
   schema: {
     query: z.string().describe("GraphQL query string to execute"),

@@ -17,7 +17,7 @@ type ProcessTemplateInput = {
 };
 
 export const tool = {
-  name: "process_template",
+  name: "guardrails_process_template",
   description: "Process input data through a Nunjucks template. The input data is made available as $ in the template. The template must return valid YAML.",
   schema: {
     template: z.string().describe("The Nunjucks template to process"),

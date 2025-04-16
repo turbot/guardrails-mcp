@@ -85,7 +85,7 @@ const TYPE_DETAILS_QUERY = `
 `;
 
 export const tool = {
-  name: "explore_runnable_schema",
+  name: "guardrails_query_runnable_introspection",
   description: "Explore a runnable type's GraphQL schema in stages. Start with 'queryType' to see available fields, use 'types' to list all types, then use 'type' with a specific typeName to get detailed type information.",
   schema: {
     runnableTypeUri: z.string().describe("The URI of the runnable type (policy or control type)"),
