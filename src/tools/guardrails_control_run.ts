@@ -39,7 +39,7 @@ interface RunControlResponse {
 }
 
 type RunControlInput = {
-  controlId: string;
+  id: string;
 };
 
 export const tool: Tool = {
@@ -48,15 +48,15 @@ export const tool: Tool = {
   inputSchema: {
     type: "object",
     properties: {
-      controlId: {
+      id: {
         type: "string",
         description: "The ID of the control to run"
       }
     },
-    required: ["controlId"],
+    required: ["id"],
     additionalProperties: false
   },
-  handler: async ({ controlId }: RunControlInput) => {
+  handler: async ({ id }: RunControlInput) => {
     logger.info("Starting run_guardrails_control tool execution");
     try {
       const mutation = `
@@ -97,7 +97,7 @@ export const tool: Tool = {
 
       const variables = {
         input: {
-          id: controlId
+          id: id
         }
       };
 
