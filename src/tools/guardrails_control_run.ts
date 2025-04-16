@@ -24,6 +24,9 @@ interface RunControlResponse {
       details: string | null;
       turbot: {
         id: string;
+        timestamp: string;
+        stateChangeTimestamp: string;
+        nextTickTimestamp: string;
       };
     };
     resource: {
@@ -80,6 +83,9 @@ export const tool: Tool = {
               details
               turbot {
                 id
+                timestamp
+                stateChangeTimestamp
+                nextTickTimestamp
               }
             }
             resource {
@@ -129,7 +135,12 @@ export const tool: Tool = {
           primaryState: runControl.control.primaryState,
           state: runControl.control.state,
           reason: runControl.control.reason,
-          details: runControl.control.details
+          details: runControl.control.details,
+          turbot: {
+            timestamp: runControl.control.turbot.timestamp,
+            stateChangeTimestamp: runControl.control.turbot.stateChangeTimestamp,
+            nextTickTimestamp: runControl.control.turbot.nextTickTimestamp
+          }
         },
         resource: {
           id: runControl.resource.turbot.id,
