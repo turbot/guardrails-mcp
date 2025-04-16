@@ -1,7 +1,7 @@
 import { executeQuery } from "../utils/graphqlClient.js";
 import { logger } from '../services/logger.js';
 import { formatJsonToolResponse, errorResponse } from '../utils/responseFormatter.mjs';
-import { JSONSchemaType } from 'ajv';
+import type { Tool } from "@modelcontextprotocol/sdk/types.js";
 
 interface ResourceType {
   uri: string;
@@ -24,16 +24,6 @@ type ListResourceTypesInput = {
   filter?: string | null;
 };
 
-interface Tool {
-  name: string;
-  description: string;
-  inputSchema: JSONSchemaType<ListResourceTypesInput>;
-  handler: (input: ListResourceTypesInput) => Promise<{
-    content: Array<{ type: "text"; text: string }>;
-    isError?: boolean;
-  }>;
-}
-
 export const tool: Tool = {
   name: "guardrails_resource_type_list",
   description: "List all available resource types in Turbot Guardrails. Optionally filter the results using any valid Guardrails filter syntax.",
@@ -42,12 +32,11 @@ export const tool: Tool = {
     properties: {
       filter: {
         type: "string",
-        description: "Optional filter to apply (e.g. 'category:security' or 'title:/encryption/i')",
-        nullable: true
+        description: "Optional filter to apply (e.g. 'category:security' or 'title:/encryption/i')"
       }
     },
     additionalProperties: false
-  } as JSONSchemaType<ListResourceTypesInput>,
+  },
   handler: async ({ filter }: ListResourceTypesInput) => {
     logger.info("Starting list_guardrails_resource_types tool execution");
     try {

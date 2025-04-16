@@ -2,7 +2,7 @@ import { executeMutation } from "../utils/graphqlClient.js";
 import { logger } from '../services/logger.js';
 import { formatJsonToolResponse, errorResponse } from '../utils/responseFormatter.mjs';
 import { formatJson } from '../utils/jsonFormatter.mjs';
-import { JSONSchemaType } from 'ajv';
+import type { Tool } from "@modelcontextprotocol/sdk/types.js";
 
 interface RunControlResponse {
   runControl: {
@@ -42,16 +42,6 @@ type RunControlInput = {
   controlId: string;
 };
 
-interface Tool {
-  name: string;
-  description: string;
-  inputSchema: JSONSchemaType<RunControlInput>;
-  handler: (input: RunControlInput) => Promise<{
-    content: Array<{ type: "text"; text: string }>;
-    isError?: boolean;
-  }>;
-}
-
 export const tool: Tool = {
   name: "guardrails_control_run",
   description: "Run a Turbot Guardrails control by its ID.",
@@ -65,7 +55,7 @@ export const tool: Tool = {
     },
     required: ["controlId"],
     additionalProperties: false
-  } as JSONSchemaType<RunControlInput>,
+  },
   handler: async ({ controlId }: RunControlInput) => {
     logger.info("Starting run_guardrails_control tool execution");
     try {

@@ -3,7 +3,7 @@ import { parse as parseYaml } from "yaml";
 import { filters } from "../utils/nunjucksFilters.js";
 import { logger } from '../services/logger.js';
 import { formatToolResponse, errorResponse } from '../utils/responseFormatter.mjs';
-import { JSONSchemaType } from 'ajv';
+import type { Tool } from "@modelcontextprotocol/sdk/types.js";
 
 // Configure nunjucks with custom filters
 const env = nunjucks.configure({ autoescape: false, trimBlocks: true, lstripBlocks: true });
@@ -18,16 +18,6 @@ type ProcessTemplateInput = {
   input: Record<string, any>;
 };
 
-interface Tool {
-  name: string;
-  description: string;
-  inputSchema: JSONSchemaType<ProcessTemplateInput>;
-  handler: (input: ProcessTemplateInput) => Promise<{
-    content: Array<{ type: "text"; text: string }>;
-    isError?: boolean;
-  }>;
-}
-
 export const tool: Tool = {
   name: "guardrails_process_template",
   description: "Process input data through a Nunjucks template. The input data is made available as $ in the template. The template must return valid YAML.",
@@ -40,13 +30,12 @@ export const tool: Tool = {
       },
       input: {
         type: "object",
-        description: "The input data to make available as $ in the template",
-        additionalProperties: true
+        description: "The input data to make available as $ in the template"
       }
     },
     required: ["template", "input"],
     additionalProperties: false
-  } as JSONSchemaType<ProcessTemplateInput>,
+  },
   handler: async ({ template, input }: ProcessTemplateInput) => {
     try {
       // Process the template with input data

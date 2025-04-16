@@ -1,23 +1,13 @@
 import { executeQuery } from "../utils/graphqlClient.js";
 import { logger } from '../services/logger.js';
 import { formatJsonToolResponse, errorResponse } from '../utils/responseFormatter.mjs';
-import { JSONSchemaType } from 'ajv';
+import type { Tool } from "@modelcontextprotocol/sdk/types.js";
 
 type QueryRunnableIntrospectionParams = {
   runnableTypeUri: string;
   section?: "queryType" | "types" | "type" | null;
   typeName?: string | null;
 };
-
-interface Tool {
-  name: string;
-  description: string;
-  inputSchema: JSONSchemaType<QueryRunnableIntrospectionParams>;
-  handler: (input: QueryRunnableIntrospectionParams) => Promise<{
-    content: Array<{ type: "text"; text: string }>;
-    isError?: boolean;
-  }>;
-}
 
 // Query to get the root query type and available types
 const ROOT_SCHEMA_QUERY = `
@@ -109,18 +99,16 @@ export const tool: Tool = {
       section: {
         type: "string",
         description: "Start with 'queryType' to see available fields, then use 'types' to list all types, finally use 'type' to inspect a specific type",
-        enum: ["queryType", "types", "type"],
-        nullable: true
+        enum: ["queryType", "types", "type"]
       },
       typeName: {
         type: "string",
-        description: "Required when section is 'type': the name of a type discovered from the 'types' section",
-        nullable: true
+        description: "Required when section is 'type': the name of a type discovered from the 'types' section"
       }
     },
     required: ["runnableTypeUri"],
     additionalProperties: false
-  } as JSONSchemaType<QueryRunnableIntrospectionParams>,
+  },
   handler: async ({ runnableTypeUri, section = "queryType", typeName }: QueryRunnableIntrospectionParams) => {
     try {
       // Construct the endpoint with query parameters

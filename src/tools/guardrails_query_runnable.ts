@@ -1,7 +1,7 @@
 import { executeQuery } from "../utils/graphqlClient.js";
 import { logger } from '../services/logger.js';
 import { formatToolResponse, errorResponse } from '../utils/responseFormatter.mjs';
-import { JSONSchemaType } from 'ajv';
+import type { Tool } from "@modelcontextprotocol/sdk/types.js";
 
 type QueryRunnableParams = {
   runnableTypeUri: string;
@@ -9,16 +9,6 @@ type QueryRunnableParams = {
   query: string;
   variables?: Record<string, any> | null;
 };
-
-interface Tool {
-  name: string;
-  description: string;
-  inputSchema: JSONSchemaType<QueryRunnableParams>;
-  handler: (input: QueryRunnableParams) => Promise<{
-    content: Array<{ type: "text"; text: string }>;
-    isError?: boolean;
-  }>;
-}
 
 export const tool: Tool = {
   name: "guardrails_query_runnable",
@@ -32,8 +22,7 @@ export const tool: Tool = {
       },
       resourceId: {
         type: "string",
-        description: "Optional resource ID to provide context for the query",
-        nullable: true
+        description: "Optional resource ID to provide context for the query"
       },
       query: {
         type: "string",
@@ -41,14 +30,12 @@ export const tool: Tool = {
       },
       variables: {
         type: "object",
-        description: "Optional variables for the query",
-        additionalProperties: true,
-        nullable: true
+        description: "Optional variables for the query"
       }
     },
     required: ["runnableTypeUri", "query"],
     additionalProperties: false
-  } as JSONSchemaType<QueryRunnableParams>,
+  },
   handler: async ({ runnableTypeUri, resourceId, query, variables = {} }: QueryRunnableParams) => {
     try {
       // Construct the endpoint with query parameters

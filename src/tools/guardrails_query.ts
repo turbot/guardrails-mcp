@@ -2,22 +2,12 @@ import { executeQuery } from "../utils/graphqlClient.js";
 import { logger } from '../services/logger.js';
 import { formatToolResponse, errorResponse } from '../utils/responseFormatter.mjs';
 import { parse, OperationDefinitionNode } from "graphql";
-import { JSONSchemaType } from 'ajv';
+import type { Tool } from "@modelcontextprotocol/sdk/types.js";
 
 type QueryToolInput = {
   query: string;
   variables?: Record<string, any> | null;
 };
-
-interface Tool {
-  name: string;
-  description: string;
-  inputSchema: JSONSchemaType<QueryToolInput>;
-  handler: (input: QueryToolInput) => Promise<{
-    content: Array<{ type: "text"; text: string }>;
-    isError?: boolean;
-  }>;
-}
 
 export const tool: Tool = {
   name: "guardrails_query",
@@ -31,14 +21,12 @@ export const tool: Tool = {
       },
       variables: {
         type: "object",
-        description: "Optional variables for the query",
-        additionalProperties: true,
-        nullable: true
+        description: "Optional variables for the query"
       }
     },
     required: ["query"],
     additionalProperties: false
-  } as JSONSchemaType<QueryToolInput>,
+  },
   handler: async ({ query, variables = {} }: QueryToolInput) => {
     try {
       // Parse and validate the query

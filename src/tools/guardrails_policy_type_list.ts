@@ -1,7 +1,7 @@
 import { executeQuery } from "../utils/graphqlClient.js";
 import { logger } from '../services/logger.js';
 import { formatJsonToolResponse, errorResponse } from '../utils/responseFormatter.mjs';
-import { JSONSchemaType } from 'ajv';
+import type { Tool } from "@modelcontextprotocol/sdk/types.js";
 
 interface PolicyType {
   uri: string;
@@ -28,16 +28,6 @@ type ListPolicyTypesInput = {
   filter?: string | null;
 };
 
-interface Tool {
-  name: string;
-  description: string;
-  inputSchema: JSONSchemaType<ListPolicyTypesInput>;
-  handler: (input: ListPolicyTypesInput) => Promise<{
-    content: Array<{ type: "text"; text: string }>;
-    isError?: boolean;
-  }>;
-}
-
 export const tool: Tool = {
   name: "guardrails_policy_type_list",
   description: "List all available policy types in Turbot Guardrails. Optionally filter the results using any valid Guardrails filter syntax.",
@@ -46,12 +36,11 @@ export const tool: Tool = {
     properties: {
       filter: {
         type: "string",
-        description: "Optional filter to apply (e.g. 'category:security' or 'title:/encryption/i')",
-        nullable: true
+        description: "Optional filter to apply (e.g. 'category:security' or 'title:/encryption/i')"
       }
     },
     additionalProperties: false
-  } as JSONSchemaType<ListPolicyTypesInput>,
+  },
   handler: async ({ filter }: ListPolicyTypesInput) => {
     logger.info("Starting list_guardrails_policy_types tool execution");
     try {

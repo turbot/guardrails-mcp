@@ -1,7 +1,7 @@
 import { executeQuery } from "../utils/graphqlClient.js";
 import { logger } from '../services/logger.js';
 import { formatJsonToolResponse, errorResponse, formatGraphQLError } from '../utils/responseFormatter.mjs';
-import { JSONSchemaType } from 'ajv';
+import type { Tool } from "@modelcontextprotocol/sdk/types.js";
 
 interface ControlType {
   uri: string;
@@ -37,16 +37,6 @@ type ShowControlTypeInput = {
   id: string;
 };
 
-interface Tool {
-  name: string;
-  description: string;
-  inputSchema: JSONSchemaType<ShowControlTypeInput>;
-  handler: (input: ShowControlTypeInput) => Promise<{
-    content: Array<{ type: "text"; text: string }>;
-    isError?: boolean;
-  }>;
-}
-
 export const tool: Tool = {
   name: "guardrails_control_type_show",
   description: "Show detailed information about a specific control type.",
@@ -55,13 +45,12 @@ export const tool: Tool = {
     properties: {
       id: {
         type: "string",
-        description: "The ID or URI of the control type to show (e.g. '320152411455166' or 'tmod:@turbot/azure-cisv2-0#/control/types/s01')",
-        minLength: 1
+        description: "The ID or URI of the control type to show (e.g. '320152411455166' or 'tmod:@turbot/azure-cisv2-0#/control/types/s01')"
       }
     },
     required: ["id"],
     additionalProperties: false
-  } as JSONSchemaType<ShowControlTypeInput>,
+  },
   handler: async ({ id }: ShowControlTypeInput) => {
     logger.info("Starting show_guardrails_control_type tool execution");
     try {
