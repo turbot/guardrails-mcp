@@ -57,9 +57,9 @@ export function formatJsonToolResponse(data: unknown, isError = false): ToolResp
 export function formatGraphQLError(error: unknown, id: string): string {
   if (error instanceof Error) {
     if (error.message.includes('Not Found')) {
-      return `Resource with ID/URI '${id}' was not found. Please verify the value is correct and try again.`;
+      return `'${id}' not found. Please verify the value is correct and try again.`;
     } else if (error.message.includes('Invalid input')) {
-      return `Invalid format. Please provide either a numeric ID (e.g. '320152411455166') or a valid URI (e.g. 'tmod:@organization/mod#/type/id').`;
+      return `'${id}' has an invalid format. Please provide a valid ID or URI.`;
     }
     return `${error.name}: ${error.message}`;
   }
