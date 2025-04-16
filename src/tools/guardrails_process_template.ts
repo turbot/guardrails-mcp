@@ -46,7 +46,8 @@ export const tool: Tool = {
         parseYaml(result);
       } catch (error) {
         const yamlError = error as Error;
-        throw new Error(`Template output is not valid YAML: ${yamlError.message}`);
+        logger.error("Invalid YAML output:", yamlError);
+        return errorResponse(`Template output is not valid YAML: ${yamlError.message}`);
       }
 
       logger.debug("Template processed successfully:", result);

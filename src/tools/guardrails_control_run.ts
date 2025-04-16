@@ -113,8 +113,9 @@ export const tool: Tool = {
       const result = JSON.parse(rawResult) as RunControlResponse;
       logger.debug("Parsed result:", result);
 
-      if (!result.runControl) {
-        throw new Error(`Invalid response structure: ${formatJson(result)}`);
+      if (!result?.runControl) {
+        logger.error(`Invalid response structure: ${formatJson(result)}`);
+        return errorResponse(`Invalid response structure: ${formatJson(result)}`);
       }
 
       const runControl = result.runControl;

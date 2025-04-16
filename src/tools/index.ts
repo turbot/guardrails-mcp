@@ -76,12 +76,14 @@ export function setupTools(server: Server) {
       // Validate tool exists
       const tool = tools[name as keyof typeof tools];
       if (!tool) {
-        throw new Error(`Unknown tool: ${name}`);
+        logger.error(`Unknown tool: ${name}`);
+        return errorResponse(`Unknown tool: ${name}`);
       }
 
       // Validate tool has handler
       if (!tool.handler) {
-        throw new Error(`Tool ${name} has no handler defined`);
+        logger.error(`Tool ${name} has no handler defined`);
+        return errorResponse(`Tool ${name} has no handler defined`);
       }
 
       // Validate arguments against the tool's schema

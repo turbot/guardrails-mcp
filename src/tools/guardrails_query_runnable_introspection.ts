@@ -115,7 +115,8 @@ export const tool: Tool = {
       const endpoint = `/api/v5/graphql?runnableTypeUri=${encodeURIComponent(runnableTypeUri)}`;
 
       if (section === "type" && !typeName) {
-        throw new Error("typeName is required when section is 'type'. First use section: 'types' to discover available type names.");
+        logger.error("Missing required typeName parameter for type section");
+        return errorResponse("typeName is required when section is 'type'. First use section: 'types' to discover available type names.");
       }
 
       const query = section === "type" ? TYPE_DETAILS_QUERY : ROOT_SCHEMA_QUERY;
