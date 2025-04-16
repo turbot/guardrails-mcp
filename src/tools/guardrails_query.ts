@@ -1,5 +1,7 @@
 import { z } from "zod";
 import { executeQuery } from "../utils/graphqlClient.js";
+import { logger } from '../services/logger.js';
+import { formatToolResponse, errorResponse } from '../utils/responseFormatter.mjs';
 import { parse, OperationDefinitionNode } from "graphql";
 
 type QueryToolInput = {
@@ -34,46 +36,33 @@ export const tool: Tool = {
 
       // Basic validation
       if (operations.length === 0) {
-        return {
-          isError: true,
-          content: [{ type: "text" as const, text: "Query must contain at least one operation" }]
-        };
+        return errorResponse("Query must contain at least one operation");
       }
 
       const operation = operations[0];
       
       // Validate operation type
       if (operation.operation !== "query") {
-        return {
-          isError: true,
-          content: [{ 
-            type: "text" as const, 
-            text: `Invalid operation type: ${operation.operation}. Only queries are allowed in the query tool.` 
-          }]
-        };
+        return errorResponse(`Invalid operation type: ${operation.operation}. Only queries are allowed in the query tool.`);
+      }
+
+      // Validate query
+      if (!query.trim()) {
+        return errorResponse("Query cannot be empty");
+      }
+
+      // Check for mutation attempts
+      if (query.toLowerCase().includes("mutation")) {
+        return errorResponse("Mutations are not allowed. Use the appropriate mutation tool instead.");
       }
 
       // If we get here, it's a valid query
       const result = await executeQuery(query, variables);
-      return {
-        content: [
-          {
-            type: "text" as const,
-            text: result
-          }
-        ]
-      };
-
-    } catch (error) {
-      return {
-        isError: true,
-        content: [
-          {
-            type: "text" as const,
-            text: error instanceof Error ? error.message : String(error)
-          }
-        ]
-      };
+      logger.debug("Query executed successfully");
+      return formatToolResponse(result);
+    } catch (error: any) {
+      logger.error("Error executing query:", error);
+      return errorResponse(error.message);
     }
   }
 }; 

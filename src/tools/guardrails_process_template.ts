@@ -2,6 +2,8 @@ import { z } from "zod";
 import nunjucks from "nunjucks";
 import { parse as parseYaml } from "yaml";
 import { filters } from "../utils/nunjucksFilters.js";
+import { logger } from '../services/logger.js';
+import { formatToolResponse, errorResponse } from '../utils/responseFormatter.mjs';
 
 // Configure nunjucks with custom filters
 const env = nunjucks.configure({ autoescape: false, trimBlocks: true, lstripBlocks: true });
@@ -36,15 +38,12 @@ export const tool = {
         throw new Error(`Template output is not valid YAML: ${yamlError.message}`);
       }
 
-      return {
-        content: [{ type: "text" as const, text: result }]
-      };
+      logger.debug("Template processed successfully:", result);
+      return formatToolResponse(result);
     } catch (error) {
-      const processError = error as Error;
-      return {
-        isError: true,
-        content: [{ type: "text" as const, text: `Failed to process template: ${processError.message}` }]
-      };
+      logger.error("Error processing template:", error);
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      return errorResponse(errorMessage);
     }
   }
 }; 

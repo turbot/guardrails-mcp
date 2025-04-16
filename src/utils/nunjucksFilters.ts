@@ -1,5 +1,6 @@
 import _ from "lodash";
 import { dump as yamlDump } from "js-yaml";
+import { formatJson, formatJsonPretty } from './jsonFormatter.mjs';
 
 // Helper functions
 const formatPadString = (pad = 2): string => {
@@ -11,6 +12,19 @@ const formatPadString = (pad = 2): string => {
   }
   return pad.toString();
 };
+
+function getIndentSize(indent: unknown): number {
+  if (typeof indent === 'number') {
+    return indent;
+  }
+  if (typeof indent === 'string') {
+    const parsed = parseInt(indent, 10);
+    if (!isNaN(parsed)) {
+      return parsed;
+    }
+  }
+  return 2; // default indentation
+}
 
 const multilinePad = (multilineStr: string, pad = 0): string => {
   if (!pad) {
@@ -174,10 +188,10 @@ const checkValue = (value: any, values: Record<string, any>, regexMatch: RegExp)
 export const filters = {
   json: (obj: any, kwargs: Record<string, any> = {}) => {
     try {
-      const str = JSON.stringify(obj, null, formatPadString(kwargs.indent));
+      const str = formatJsonPretty(obj, getIndentSize(kwargs.indent));
       return multilinePad(str, kwargs.pad);
     } catch (e: any) {
-      return JSON.stringify({ error: e.message });
+      return formatJson({ error: e.message });
     }
   },
 

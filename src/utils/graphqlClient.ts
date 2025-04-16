@@ -1,5 +1,6 @@
 import { GraphQLClient } from "graphql-request";
 import config from "../config/env.js";
+import { formatJson } from './jsonFormatter.mjs';
 
 const { TURBOT_GRAPHQL_ENDPOINT, TURBOT_ACCESS_KEY_ID, TURBOT_SECRET_ACCESS_KEY } = config;
 

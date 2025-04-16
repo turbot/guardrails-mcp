@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { executeQuery } from "../utils/graphqlClient.js";
 import { logger } from '../services/logger.js';
+import { formatJsonToolResponse, errorResponse } from '../utils/responseFormatter.mjs';
 
 interface QueryRunnableIntrospectionParams {
   runnableTypeUri: string;
@@ -131,21 +132,13 @@ export const tool = {
           },
           {
             type: "text" as const,
-            text: JSON.stringify(filteredData, null, 2)
+            text: formatJsonToolResponse(filteredData).content[0].text
           }
         ]
       };
     } catch (error: any) {
       logger.error(`Error executing introspection query: ${error.message}`);
-      return {
-        isError: true,
-        content: [
-          {
-            type: "text" as const,
-            text: error.message
-          }
-        ]
-      };
+      return errorResponse(error.message);
     }
   }
-}; 
+};

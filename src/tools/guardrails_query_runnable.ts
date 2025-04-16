@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { executeQuery } from "../utils/graphqlClient.js";
 import { logger } from '../services/logger.js';
+import { formatToolResponse, errorResponse } from '../utils/responseFormatter.mjs';
 
 interface QueryRunnableParams {
   runnableTypeUri: string;
@@ -24,25 +25,11 @@ export const tool = {
       const endpoint = `/api/v5/graphql?runnableTypeUri=${encodeURIComponent(runnableTypeUri)}${resourceId ? `&resourceId=${encodeURIComponent(resourceId)}` : ''}`;
 
       const result = await executeQuery(query, variables, endpoint);
-      return {
-        content: [
-          {
-            type: "text" as const,
-            text: result
-          }
-        ]
-      };
+      logger.debug("Query executed successfully");
+      return formatToolResponse(result);
     } catch (error: any) {
-      logger.error(`Error executing query against runnable type: ${error.message}`);
-      return {
-        isError: true,
-        content: [
-          {
-            type: "text" as const,
-            text: error.message
-          }
-        ]
-      };
+      logger.error("Error executing query:", error);
+      return errorResponse(error.message);
     }
   }
 }; 

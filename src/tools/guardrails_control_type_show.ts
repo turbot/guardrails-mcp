@@ -1,6 +1,7 @@
 import { executeQuery } from "../utils/graphqlClient.js";
 import { z } from "zod";
 import { logger } from '../services/logger.js';
+import { formatJsonToolResponse, errorResponse } from '../utils/responseFormatter.mjs';
 
 interface ControlType {
   uri: string;
@@ -80,15 +81,7 @@ export const tool = {
       logger.debug("Query executed successfully");
 
       if (!result.controlType) {
-        return {
-          isError: true,
-          content: [
-            {
-              type: "text" as const,
-              text: `No control type found with URI: ${uri}`
-            }
-          ]
-        };
+        return errorResponse(`No control type found with URI: ${uri}`);
       }
 
       // Transform the response to flatten and reorganize fields
@@ -109,29 +102,14 @@ export const tool = {
         actionTypes: item.actionTypes.items.map(action => action.uri)
       };
 
-      return {
-        content: [
-          {
-            type: "text" as const,
-            text: JSON.stringify(transformedResult, null, 2)
-          }
-        ]
-      };
+      return formatJsonToolResponse(transformedResult);
     } catch (error: any) {
       logger.error("Error in guardrails_control_type_show:", error);
       const errorMessage = error instanceof Error ? 
         `${error.name}: ${error.message}` : 
         String(error);
       
-      return {
-        content: [
-          {
-            type: "text" as const,
-            text: `Error showing control type: ${errorMessage}`
-          }
-        ],
-        isError: true
-      };
+      return errorResponse(`Error showing control type: ${errorMessage}`);
     }
   }
 }; 

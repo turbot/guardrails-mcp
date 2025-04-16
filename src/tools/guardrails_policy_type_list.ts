@@ -1,6 +1,7 @@
 import { executeQuery } from "../utils/graphqlClient.js";
 import { z } from "zod";
 import { logger } from '../services/logger.js';
+import { formatJsonToolResponse, errorResponse } from '../utils/responseFormatter.mjs';
 
 interface PolicyType {
   uri: string;
@@ -82,29 +83,14 @@ export const tool = {
         targets: item.targets
       }));
 
-      return {
-        content: [
-          {
-            type: "text" as const,
-            text: JSON.stringify(transformedResult, null, 2),
-          },
-        ],
-      };
+      return formatJsonToolResponse(transformedResult);
     } catch (error) {
       logger.error("Error in list_guardrails_policy_types:", error);
       const errorMessage = error instanceof Error ? 
         `${error.name}: ${error.message}` : 
         String(error);
       
-      return {
-        content: [
-          {
-            type: "text" as const,
-            text: `Error listing policy types: ${errorMessage}`,
-          },
-        ],
-        isError: true,
-      };
+      return errorResponse(`Error listing policy types: ${errorMessage}`);
     }
   }
 }; 

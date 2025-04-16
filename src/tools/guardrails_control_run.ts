@@ -1,6 +1,8 @@
 import { z } from "zod";
 import { executeMutation } from "../utils/graphqlClient.js";
 import { logger } from '../services/logger.js';
+import { formatJsonToolResponse, errorResponse } from '../utils/responseFormatter.mjs';
+import { formatJson } from '../utils/jsonFormatter.mjs';
 
 interface RunControlResponse {
   runControl: {
@@ -98,7 +100,7 @@ export const tool = {
       logger.debug("Parsed result:", result);
 
       if (!result.runControl) {
-        throw new Error(`Invalid response structure: ${JSON.stringify(result)}`);
+        throw new Error(`Invalid response structure: ${formatJson(result)}`);
       }
 
       const runControl = result.runControl;
@@ -128,29 +130,14 @@ export const tool = {
         }
       };
 
-      return {
-        content: [
-          {
-            type: "text" as const,
-            text: JSON.stringify(transformedResult, null, 2)
-          }
-        ]
-      };
+      return formatJsonToolResponse(transformedResult);
     } catch (error) {
       logger.error("Error in run_guardrails_control:", error);
       const errorMessage = error instanceof Error ? 
         `${error.name}: ${error.message}` : 
         String(error);
       
-      return {
-        content: [
-          {
-            type: "text" as const,
-            text: `Error running control: ${errorMessage}`
-          }
-        ],
-        isError: true
-      };
+      return errorResponse(`Error running control: ${errorMessage}`);
     }
   }
 }; 

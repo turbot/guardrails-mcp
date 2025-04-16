@@ -5,6 +5,8 @@
  * and supports suppressing logs during tests.
  */
 
+import { formatJson } from '../utils/jsonFormatter.mjs';
+
 // Define log levels
 export enum LogLevel {
     DEBUG = 'debug',
@@ -98,11 +100,7 @@ export enum LogLevel {
           if (arg instanceof Error) {
             return arg.message;
           } else if (typeof arg === 'object') {
-            try {
-              return JSON.stringify(arg);
-            } catch (e) {
-              return String(arg);
-            }
+            return formatJson(arg);
           }
           return String(arg);
         });
