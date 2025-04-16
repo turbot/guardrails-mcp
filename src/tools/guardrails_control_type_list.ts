@@ -30,7 +30,7 @@ export const tool = {
     filter: z.string().optional().describe("Optional filter to apply (e.g. 'category:security' or 'title:/encryption/i')")
   },
   handler: async ({ filter }: ListControlTypesInput) => {
-    logger.info("Starting guardrails_control_type_list tool execution");
+    logger.info("Starting list_guardrails_control_types tool execution");
     try {
       // Build array of filters
       const filters = ["limit:5000"];
@@ -60,7 +60,7 @@ export const tool = {
 
       logger.debug("Executing GraphQL query with filters:", filters);
       const result = JSON.parse(await executeQuery(query, { filters })) as QueryResponse;
-      logger.debug("Query executed successfully");
+      logger.info("Query executed successfully");
 
       // Transform the response to flatten and reorganize fields
       const transformedResult = result.controlTypes.items.map(item => ({
@@ -79,7 +79,7 @@ export const tool = {
         ],
       };
     } catch (error) {
-      logger.error("Error in guardrails_control_type_list:", error);
+      logger.error("Error in list_guardrails_control_types:", error);
       const errorMessage = error instanceof Error ? 
         `${error.name}: ${error.message}` : 
         String(error);
