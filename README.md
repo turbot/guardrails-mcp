@@ -40,7 +40,7 @@ The following resources were made available for reference:
 
 ## Tools
 
-### query_guardrails
+### guardrails_query
 
 Execute any GraphQL query with optional variables
 
@@ -48,28 +48,21 @@ Execute any GraphQL query with optional variables
   - query (string): The graphql query to execute
   - variable (string)(Optional): Variable to pass to the query.
 
-### list_resource_types
+### guardrails_resource_type_list
 
 List all available resource types in Turbot Guardrails. Optionally filter the results using any valid Guardrails filter syntax.
 
 - Input:
   - filter (string)(Optional): Filter to apply (e.g. 'category:storage' or 'title:/bucket/i')
 
-### list_control_types
-
-List all available control types in Turbot Guardrails. Optionally filter the results using any valid Guardrails filter syntax.
-
-- Input:
-  - filter (string)(Optional): Filter to apply (e.g. 'category:security' or 'title:/encryption/i')
-
-### list_policy_types
+### guardrails_policy_type_list
 
 List all available policy types in Turbot Guardrails. Optionally filter the results using any valid Guardrails filter syntax.
 
 - Input:
   - filter (string)(Optional): Filter to apply (e.g. 'category:security' or 'title:/encryption/i')
 
-### run_control
+### guardrails_control_run
 
 Run a Turbot Guardrails control by its ID.
 
@@ -81,8 +74,8 @@ Run a Turbot Guardrails control by its ID.
 - Node.js 20 or higher
 - A [Turbot Guardrails API](https://turbot.com/guardrails/docs/guides/using-guardrails/iam/access-keys#generate-a-new-guardrails-api-access-key) key with at least:
 
-  - `Turbot/ReadOnly` permissions in order to use the "query_guardrails" tool and list tools.
-  - `Turbot/Operator` permissions in order to execute controls using the "run_control" tool.
+  - `Turbot/ReadOnly` permissions in order to use the "guardrails_query" tool and list tools.
+  - `Turbot/Operator` permissions in order to execute controls using the "guardrails_control_run" tool.
 
 - The endpoint URL for your Guardrails workspace
 

@@ -1,12 +1,13 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { tool as queryTool } from "./query_guardrails.js";
-import { tool as listResourceTypesTool } from "./list_resource_types.js";
+import { tool as queryTool } from "./guardrails_query.js";
+import { tool as listResourceTypesTool } from "./guardrails_resource_type_list.js";
 import { tool as listControlTypesTool } from "./list_control_types.js";
-import { tool as listPolicyTypesTool } from "./list_policy_types.js";
-import { tool as runControlTool } from "./run_control.js";
-import { tool as queryRunnableTool } from "./query_runnable.js";
-import { tool as queryRunnableIntrospectionTool } from "./query_runnable_introspection.js";
-import { tool as processTemplateTool } from "./process_template.js";
+import { tool as listPolicyTypesTool } from "./guardrails_policy_type_list.js";
+import { tool as runControlTool } from "./guardrails_control_run.js";
+import { tool as queryRunnableTool } from "./guardrails_query_runnable.js";
+import { tool as queryRunnableIntrospectionTool } from "./guardrails_query_runnable_introspection.js";
+import { tool as processTemplateTool } from "./guardrails_process_template.js";
+import { tool as guardrailsControlTypeShowTool } from "./guardrails_control_type_show.js";
 import { logger } from "../services/logger.js";
 
 // Register all available tools
@@ -18,7 +19,8 @@ const tools = [
   runControlTool,
   queryRunnableTool,
   queryRunnableIntrospectionTool,
-  processTemplateTool
+  processTemplateTool,
+  guardrailsControlTypeShowTool
 ];
 
 // Export tools for server capabilities
