@@ -13,6 +13,9 @@ import { setupTools } from "./tools/index.js";
 // Import prompt registrations
 import { registerPrompts, promptCapabilities } from "./prompts/index.js";
 
+// Import resource registrations
+import { setupResources, resourceCapabilities } from "./resources/index.js";
+
 // // Import prompt registrations
 // import { registerResourcePrompts } from "./prompts/resourceAnalysis.js";
 // import { registerSecurityPrompts } from "./prompts/securityAnalysis.js";
@@ -31,13 +34,16 @@ const server = new McpServer(
     capabilities: {
       tools: {},
       prompts: promptCapabilities.prompts,
-      resources: {},
+      resources: resourceCapabilities,
     }
   }
 );
 
 // Register tools
 setupTools(server.server);
+
+// Register resources
+setupResources(server.server);
 
 // // Register prompts
 // registerResourcePrompts(server);
