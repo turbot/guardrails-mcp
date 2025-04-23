@@ -1,6 +1,6 @@
 import type { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { CallToolRequestSchema, ListToolsRequestSchema, type CallToolRequest, type ServerResult } from "@modelcontextprotocol/sdk/types.js";
-import { logger } from "../services/logger.js";
+import { logger } from "../services/pinoLogger.js";
 import { errorResponse } from "../utils/responseFormatter.mjs";
 import type { ErrorObject } from "ajv";
 import AjvModule from "ajv";
@@ -121,7 +121,7 @@ export function setupTools(server: Server) {
       const result = await (tool.handler as (args: unknown) => Promise<ServerResult>)(args || {});
       
       // Log tool completion
-      logger.info(`Tool ${name} completed successfully`);
+      logger.info(`Tool ${name} completed`);
       
       return result;
     } catch (error) {
