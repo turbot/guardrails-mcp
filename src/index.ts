@@ -23,7 +23,6 @@ const SERVER_INFO = {
   version: pkg.version,
   description: pkg.description,
   vendor: pkg.author,
-  license: pkg.license,
   homepage: pkg.homepage,
 } as const;
 
