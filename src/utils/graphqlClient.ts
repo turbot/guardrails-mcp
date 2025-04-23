@@ -65,7 +65,7 @@ export async function executeQuery(query: string, variables = {}, customEndpoint
   try {
     const graphqlClient = createGraphQLClient(customEndpoint);
     const data = await graphqlClient.request(query, variables);
-    return JSON.stringify(data, null, 2);
+    return JSON.stringify(data);
   } catch (error: any) {
     throw new Error(formatGraphQLError(error));
   }
@@ -76,7 +76,7 @@ export async function executeMutation(mutation: string, variables = {}) {
   try {
     const graphqlClient = createGraphQLClient();
     const data = await graphqlClient.request(mutation, variables);
-    return JSON.stringify(data, null, 2);
+    return JSON.stringify(data);
   } catch (error: any) {
     throw new Error(formatGraphQLError(error));
   }
