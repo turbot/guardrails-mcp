@@ -26,13 +26,18 @@ type ListPolicyTypesInput = {
 
 export const tool: Tool = {
   name: "guardrails_policy_type_list",
-  description: "List all available policy types in Turbot Guardrails. Optionally filter the results using any valid Guardrails filter syntax.",
+  description: "Discover, search and filter policy types in Turbot Guardrails.",
   inputSchema: {
     type: "object",
     properties: {
       filter: {
         type: "string",
-        description: "Optional filter to apply (e.g. 'category:security' or 'title:/encryption/i')"
+        description: `Search or filter query. For example:
+- title: "aws encryption"
+- scoped in hierarchy: "policyType:'tmod:@turbot/gcp-storage#/policy/types/bucketApproved'"
+- multiple filters: "bucket limit:5"
+- sort: "sort:title" or "sort:-title" (descending)
+- limit: "limit:10" (default: 5000)`
       }
     },
     additionalProperties: false
@@ -89,3 +94,5 @@ export const tool: Tool = {
     }
   }
 }; 
+
+"query ExploreControlType($id: ID!, $trunkFilter: [String!]) {\n  controlType(id: $id) {\n    ...controlTypeFields\n    controlAlerts: controls(filter: \"state:alarm,invalid,error\") {\n      metadata {\n        stats {\n          total\n          __typename\n        }\n        __typename\n      }\n      __typename\n    }\n    turbot {\n      ...controlTypeMetadataFields\n      __typename\n    }\n    __typename\n  }\n  trunk: controlTypes(filter: $trunkFilter) {\n    items {\n      uri\n      turbot {\n        ...controlTypeMetadataFields\n        __typename\n      }\n      __typename\n    }\n    __typename\n  }\n}\n\nfragment controlTypeFields on ControlType {\n  description\n  icon\n  uri\n  __typename\n}\n\nfragment controlTypeMetadataFields on TurbotControlTypeMetadata {\n  id\n  title\n  __typename\n}\n"

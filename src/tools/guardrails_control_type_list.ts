@@ -27,13 +27,18 @@ type ListControlTypesInput = {
 
 export const tool: Tool = {
   name: "guardrails_control_type_list",
-  description: "List all available control types in Turbot Guardrails. Optionally filter the results using any valid Guardrails filter syntax.",
+  description: "Discover, search and filter control types in Turbot Guardrails.",
   inputSchema: {
     type: "object",
     properties: {
       filter: {
         type: "string",
-        description: "Optional filter to apply (e.g. 'category:security' or 'title:/encryption/i')"
+        description: `Search or filter query. For example:
+- title: "key expired"
+- scoped in hierarchy: "controlType:'tmod:@turbot/aws-ec2#/resource/types/ec2'"
+- multiple filters: "bucket limit:5"
+- sort: "sort:title" or "sort:-title" (descending)
+- limit: "limit:10" (default: 5000)`
       }
     },
     additionalProperties: false

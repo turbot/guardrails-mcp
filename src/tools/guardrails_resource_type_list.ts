@@ -26,13 +26,19 @@ type ListResourceTypesInput = {
 
 export const tool: Tool = {
   name: "guardrails_resource_type_list",
-  description: "List all available resource types in Turbot Guardrails. Optionally filter the results using any valid Guardrails filter syntax.",
+  description: "Discover, search and filter resource types in Turbot Guardrails.",
   inputSchema: {
     type: "object",
     properties: {
       filter: {
         type: "string",
-        description: "Optional filter to apply (e.g. 'category:storage' or 'title:/bucket/i')"
+        description: `Search or filter query. For example:
+- title: "bucket"
+- scoped in hierarchy: "resourceType:'tmod:@turbot/aws-ec2#/resource/types/ec2'"
+- category: "resourceCategory:storage"
+- multiple filters: "instance sort:-createTimestamp"
+- sort: "sort:title" or "sort:-title" (descending)
+- limit: "limit:10" (default: 5000)`
       }
     },
     additionalProperties: false
