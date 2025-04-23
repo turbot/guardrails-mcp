@@ -26,7 +26,7 @@ export enum LogLevel {
     private logs: string[] = []; // Store logs when in test mode
   
     constructor(options: LoggerOptions = {}) {
-      const envLevel = (process.env.STEAMPIPE_MCP_LOG_LEVEL || 'info').toLowerCase();
+      const envLevel = (process.env.GUARDRAILS_MCP_LOG_LEVEL || 'info').toLowerCase();
       this.options = {
         level: options.level || (this.isValidLogLevel(envLevel) ? envLevel as LogLevel : LogLevel.INFO),
         isTestEnvironment: options.isTestEnvironment || false
