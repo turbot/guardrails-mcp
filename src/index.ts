@@ -3,7 +3,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import config from "./config/env.js";
-import { logger } from "./services/logger.js";
+import { logger } from "./services/pinoLogger.js";
 import { setupResources, resourceCapabilities } from "./resources/index.js";
 import { setupResourceTemplates, resourceTemplates } from "./resourceTemplates/index.js";
 import { setupTools, tools } from "./tools/index.js";

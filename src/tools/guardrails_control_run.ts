@@ -1,5 +1,5 @@
 import { executeMutation } from "../utils/graphqlClient.js";
-import { logger } from '../services/logger.js';
+import { logger } from '../services/pinoLogger.js';
 import { formatJsonToolResponse, errorResponse } from '../utils/responseFormatter.mjs';
 import { formatJson } from '../utils/jsonFormatter.mjs';
 import type { Tool } from "@modelcontextprotocol/sdk/types.js";

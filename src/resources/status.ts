@@ -1,6 +1,6 @@
 import type { ServerResult } from "@modelcontextprotocol/sdk/types.js";
 import { executeQuery } from "../utils/graphqlClient.js";
-import { logger } from "../services/logger.js";
+import { logger } from "../services/pinoLogger.js";
 import config from "../config/env.js";
 
 // Define a function to handle status resource requests

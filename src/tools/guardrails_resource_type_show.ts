@@ -1,5 +1,5 @@
 import { executeQuery } from "../utils/graphqlClient.js";
-import { logger } from '../services/logger.js';
+import { logger } from '../services/pinoLogger.js';
 import { formatJsonToolResponse, errorResponse, formatGraphQLError } from '../utils/responseFormatter.mjs';
 import type { Tool } from "@modelcontextprotocol/sdk/types.js";
 

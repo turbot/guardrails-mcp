@@ -1,7 +1,7 @@
 import nunjucks from "nunjucks";
 import { parse as parseYaml } from "yaml";
 import { filters } from "../utils/nunjucksFilters.js";
-import { logger } from '../services/logger.js';
+import { logger } from '../services/pinoLogger.js';
 import { formatToolResponse, errorResponse } from '../utils/responseFormatter.mjs';
 import type { Tool } from "@modelcontextprotocol/sdk/types.js";
 

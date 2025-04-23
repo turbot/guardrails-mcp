@@ -1,7 +1,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { GetPromptResult } from "@modelcontextprotocol/sdk/types.js";
 import { prompt as bestPracticesPrompt } from "./best_practices.js";
-import { logger } from "../services/logger.js";
+import { logger } from "../services/pinoLogger.js";
 
 // Register all available prompts
 const prompts = [bestPracticesPrompt];

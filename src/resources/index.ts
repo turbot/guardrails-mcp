@@ -1,6 +1,6 @@
 import type { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { ListResourcesRequestSchema, ReadResourceRequestSchema } from "@modelcontextprotocol/sdk/types.js";
-import { logger } from "../services/logger.js";
+import { logger } from "../services/pinoLogger.js";
 import { errorResponse } from "../utils/responseFormatter.mjs";
 import { handleStatusResource } from "./status.js";
 
