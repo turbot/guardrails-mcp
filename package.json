@@ -23,6 +23,7 @@
     "@modelcontextprotocol/sdk": "^1.10.1",
     "@types/node": "^20.10.0",
     "@types/nunjucks": "^3.2.6",
+    "@types/pino": "^7.0.4",
     "ajv": "^8.17.1",
     "buffer": "^6.0.3",
     "colors": "^1.4.0",
@@ -32,10 +33,12 @@
     "js-yaml": "^4.1.0",
     "lodash": "^4.17.21",
     "nunjucks": "^3.2.4",
+    "pino": "^9.6.0",
     "yaml": "^2.7.0",
     "zod": "^3.22.4"
   },
   "devDependencies": {
+    "@types/jest": "^29.5.14",
     "@types/js-yaml": "^4.0.9",
     "@types/lodash": "^4.17.16",
     "@types/node": "^20.10.0",
