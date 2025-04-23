@@ -1,7 +1,7 @@
 import { executeQuery } from "../utils/graphqlClient.js";
 import { logger } from '../services/logger.js';
 import { formatToolResponse, errorResponse } from '../utils/responseFormatter.mjs';
-import { parse, OperationDefinitionNode } from "graphql";
+import { parse, OperationDefinitionNode, GraphQLError, Source } from "graphql";
 import type { Tool } from "@modelcontextprotocol/sdk/types.js";
 
 type QueryToolInput = {
@@ -29,8 +29,54 @@ export const tool: Tool = {
   },
   handler: async ({ query, variables = {} }: QueryToolInput) => {
     try {
+      // Validate query
+      if (!query.trim()) {
+        return errorResponse("Query cannot be empty");
+      }
+
+      // Check for mutation attempts
+      if (query.toLowerCase().includes("mutation")) {
+        return errorResponse("Mutations are not allowed. Use the appropriate mutation tool instead.");
+      }
+
       // Parse and validate the query
-      const document = parse(query);
+      let document;
+      try {
+        document = parse(query);
+      } catch (parseError) {
+        if (parseError instanceof GraphQLError) {
+          let errorMessage = parseError.message;
+          const locations = parseError.locations;
+          
+          // Add location information if available
+          if (locations && locations.length > 0) {
+            const location = locations[0];
+            errorMessage += `\nLocation: line ${location.line}, column ${location.column}`;
+          }
+
+          // Add source information if available
+          const source = parseError.source;
+          if (source instanceof Source) {
+            const lines = source.body.split('\n');
+            const errorLine = locations?.[0]?.line ?? 0;
+            
+            // Show the error line and a few lines of context
+            const contextStart = Math.max(0, errorLine - 2);
+            const contextEnd = Math.min(lines.length, errorLine + 2);
+            
+            errorMessage += '\n\nQuery context:';
+            for (let i = contextStart; i < contextEnd; i++) {
+              const lineNum = i + 1;
+              const prefix = lineNum === errorLine ? '> ' : '  ';
+              errorMessage += `\n${prefix}${lineNum}: ${lines[i]}`;
+            }
+          }
+
+          return errorResponse(errorMessage);
+        }
+        throw parseError; // Re-throw if not a GraphQLError
+      }
+
       const operations = document.definitions.filter(
         (def): def is OperationDefinitionNode => def.kind === "OperationDefinition"
       );
@@ -45,16 +91,6 @@ export const tool: Tool = {
       // Validate operation type
       if (operation.operation !== "query") {
         return errorResponse(`Invalid operation type: ${operation.operation}. Only queries are allowed in the query tool.`);
-      }
-
-      // Validate query
-      if (!query.trim()) {
-        return errorResponse("Query cannot be empty");
-      }
-
-      // Check for mutation attempts
-      if (query.toLowerCase().includes("mutation")) {
-        return errorResponse("Mutations are not allowed. Use the appropriate mutation tool instead.");
       }
 
       // If we get here, it's a valid query

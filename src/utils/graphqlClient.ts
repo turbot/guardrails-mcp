@@ -30,7 +30,32 @@ function createGraphQLClient(customEndpoint?: string) {
 // Helper function to format GraphQL errors
 function formatGraphQLError(error: any): string {
   if (error.response?.errors) {
-    return error.response.errors.map((e: any) => e.message).join(", ");
+    return error.response.errors.map((e: any) => {
+      let message = e.message;
+      
+      // Add location information if available
+      if (e.locations?.length > 0) {
+        const location = e.locations[0];
+        message += ` (line ${location.line}, column ${location.column})`;
+      }
+
+      // Add path information if available
+      if (e.path?.length > 0) {
+        message += ` at path: ${e.path.join('.')}`;
+      }
+
+      // Add extensions information if available
+      if (e.extensions) {
+        if (e.extensions.code) {
+          message += `\nError code: ${e.extensions.code}`;
+        }
+        if (e.extensions.classification) {
+          message += `\nClassification: ${e.extensions.classification}`;
+        }
+      }
+
+      return message;
+    }).join("\n");
   }
   return error.message || String(error);
 }
