@@ -72,7 +72,7 @@ export const tool: Tool = {
 - exact resource type: "resourceTypeId:tmod:@turbot/aws-s3#/resource/types/bucket"
 - resource type: "resourceType:bucket"
 - creation time: "createTimestamp:>T-7d"
-- last modified: "timestamp:>T-15m"
+- state last changed: "stateChangeTimestamp:>T-7d"
 - scoped in hierarchy: "resource:'arn:aws:::111122223333'"
 - multiple filters: "state:alarm resourceType:s3"
 - sort: "sort:title" or "sort:-title" (descending)

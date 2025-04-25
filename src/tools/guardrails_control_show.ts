@@ -26,7 +26,7 @@ interface Control {
   state: string;
   reason: string | null;
   details: ControlDetail[] | null;
-  mute: ControlMute | null;
+  mute: string | null;
   trunk: {
     title: string;
   } | null;
@@ -92,11 +92,7 @@ export const tool: Tool = {
             state
             reason
             details
-            mute {
-              note
-              untilStates
-              toTimestamp
-            }
+            mute
             turbot {
               id
               timestamp
