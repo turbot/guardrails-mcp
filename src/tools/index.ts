@@ -25,6 +25,8 @@ import { tool as guardrailsResourceTypeShowTool } from "./guardrails_resource_ty
 import { tool as guardrailsResourceShowTool } from "./guardrails_resource_show.js";
 import { tool as guardrailsControlListTool } from "./guardrails_control_list.js";
 import { tool as guardrailsControlShowTool } from "./guardrails_control_show.js";
+import { tool as guardrailsPolicySettingListTool } from './guardrails_policy_setting_list.js';
+import { tool as guardrailsPolicySettingShowTool } from './guardrails_policy_setting_show.js';
 
 // Export all tools for server capabilities
 export const tools = {
@@ -51,6 +53,10 @@ export const tools = {
   guardrails_control_list: guardrailsControlListTool,               // List controls
   guardrails_control_show: guardrailsControlShowTool,               // Show control details
   guardrails_control_run: runControlTool,                           // Run controls
+
+  // Policy Setting Operations
+  guardrails_policy_setting_list: guardrailsPolicySettingListTool,  // List policy settings
+  guardrails_policy_setting_show: guardrailsPolicySettingShowTool,  // Show policy setting details
 
   // Query and Template Operations
   guardrails_query_runnable: queryRunnableTool,                     // Query runnable types
