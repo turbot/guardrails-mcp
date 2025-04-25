@@ -1,6 +1,7 @@
 import { executeQuery } from "../utils/graphqlClient.js";
 import { logger } from '../services/pinoLogger.js';
 import { formatJsonToolResponse, errorResponse } from '../utils/responseFormatter.mjs';
+import { addFiltersWithDefaultLimit } from '../utils/filterUtils.js';
 import type { Tool } from "@modelcontextprotocol/sdk/types.js";
 
 interface Control {
@@ -84,13 +85,8 @@ export const tool: Tool = {
     logger.info("Starting list_guardrails_controls tool execution");
     try {
       // Build array of filters
-      const filters = ["limit:5000"];
-      
-      // If a filter is provided, add it to the filters array
-      if (filter) {
-        filters.push(filter);
-        logger.debug(`Added user filter: ${filter}`);
-      }
+      const filters: string[] = [];
+      addFiltersWithDefaultLimit(filters, filter);
 
       const query = `
         query ListControls($filters: [String!]!) {
