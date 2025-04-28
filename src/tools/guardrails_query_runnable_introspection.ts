@@ -88,7 +88,26 @@ const TYPE_DETAILS_QUERY = `
 
 export const tool: Tool = {
   name: "guardrails_query_runnable_introspection",
-  description: "Explore a runnable type's GraphQL schema in stages. Start with 'queryType' to see available fields, use 'types' to list all types, then use 'type' with a specific typeName to get detailed type information.",
+  description: `
+Introspect the GraphQL schema for a specific Guardrails runnable type (such as a policy or control type).
+
+This tool helps you discover the structure, fields, and types available for custom queries against a given runnable type.
+
+**How to use:**
+- Start with section: "queryType" to see the root query fields available for this runnable type.
+- Use section: "types" to list all types in the schema.
+- Use section: "type" and provide a typeName (from the previous step) to get detailed information about a specific type, including its fields and arguments.
+
+**Typical workflow:**
+1. Call with just runnableTypeUri (defaults to section: "queryType") to see entry points.
+2. Call with section: "types" to enumerate all types.
+3. Call with section: "type" and a typeName to drill into a type's structure.
+
+**Use this tool to:**
+- Build custom queries for use with guardrails_query_runnable
+- Understand the data model for a specific policy or control type
+- Explore available fields, arguments, and relationships for advanced automation
+  `.trim(),
   inputSchema: {
     type: "object",
     properties: {
