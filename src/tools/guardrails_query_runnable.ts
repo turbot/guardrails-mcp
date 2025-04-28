@@ -5,7 +5,7 @@ import type { Tool } from "@modelcontextprotocol/sdk/types.js";
 
 type QueryRunnableParams = {
   runnableTypeUri: string;
-  resourceId?: string | null;
+  resourceId: string;
   query: string;
   variables?: Record<string, any> | null;
 };
@@ -22,7 +22,7 @@ export const tool: Tool = {
       },
       resourceId: {
         type: "string",
-        description: "Optional resource ID to provide context for the query"
+        description: "Resource ID to provide context for the query"
       },
       query: {
         type: "string",
@@ -33,13 +33,13 @@ export const tool: Tool = {
         description: "Optional variables for the query"
       }
     },
-    required: ["runnableTypeUri", "query"],
+    required: ["runnableTypeUri", "query", "resourceId"],
     additionalProperties: false
   },
   handler: async ({ runnableTypeUri, resourceId, query, variables = {} }: QueryRunnableParams) => {
     try {
       // Construct the endpoint with query parameters
-      const endpoint = `/api/v5/graphql?runnableTypeUri=${encodeURIComponent(runnableTypeUri)}${resourceId ? `&resourceId=${encodeURIComponent(resourceId)}` : ''}`;
+      const endpoint = `/api/v5/graphql?runnableTypeUri=${encodeURIComponent(runnableTypeUri)}&resourceId=${encodeURIComponent(resourceId)}`;
 
       const result = await executeQuery(query, variables || {}, endpoint);
       logger.debug("Query executed successfully");
