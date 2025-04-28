@@ -1,91 +1,25 @@
 # Guardrails Model Context Protocol (MCP) Server
 
-<img src="https://badge.mcpx.dev?type=server" title="MCP Server"/> 
-<!-- <img src="https://badge.mcpx.dev?type=server&features=tools" title="MCP server with features/>&nbsp; -->
+Unlock the power of AI-driven cloud governance with Turbot Guardrails! This Model Context Protocol (MCP) server connects AI assistants like Claude to your Guardrails data, enabling natural language exploration, analysis, and automation across your cloud estate.
 
-Enable AI assistants like Claude to explore, analyze, and interact with your Guardrails data! This Model Context Protocol (MCP) server provides powerful capabilities:
-
-- Query and analyze cloud resources using GraphQL
-- List and filter available resource types, control types, and policy types
-- Execute controls to assess cloud resource compliance
-- Explore GraphQL schemas for custom queries
-- Process templates using Nunjucks for dynamic configurations
-
-## Demo
-
-### Query Guardrails and Run a control
-https://github.com/user-attachments/assets/d3712d18-571a-45f7-9241-19c598d072ce
-
-### Create a policy pack
-https://github.com/user-attachments/assets/51494295-6f80-4a2f-a785-15f77c102199
-
-**Note**: The following context was added to the Project.
-
-**Project Instructions**
-
-- Role: You are a Turbot Guardrails Admin with deep expertise in managing, configuring, and automating Guardrails policies, controls, and resources.
-
-- Expertise in Guardrails Hub: You have extensive knowledge of all features, configurations, and integrations available at Turbot Guardrails Hub - https://hub.guardrails.turbot.com/
-
-- Advanced Skills in GraphQL & Nunjucks: You are an expert in GraphQL for querying and mutating data, as well as Nunjucks templating for dynamic policy configurations and automation within Turbot Guardrails.
-
-**Project knowledge & Reference Materials**
-
-The following resources were made available for reference:
-
-- https://github.com/turbot/guardrails-docs/blob/main/docs/getting-started/7-minute-labs/graphql/index.md
-- https://github.com/turbot/guardrails-docs/tree/main/docs/reference/filter
-- https://github.com/turbot/guardrails-samples/tree/main/queries
-- https://github.com/turbot/guardrails-samples/tree/main/policy_packs/aws/ec2 (For EBS volume policy pack demo)
-
-## Tools
-
-### guardrails_query
-
-Execute any GraphQL query with optional variables
-
-- Input:
-  - query (string): The graphql query to execute
-  - variable (string)(Optional): Variable to pass to the query.
-
-### guardrails_resource_type_list
-
-List all available resource types in Turbot Guardrails. Optionally filter the results using any valid Guardrails filter syntax.
-
-- Input:
-  - filter (string)(Optional): Filter to apply (e.g. 'category:storage' or 'title:/bucket/i')
-
-### guardrails_policy_type_list
-
-List all available policy types in Turbot Guardrails. Optionally filter the results using any valid Guardrails filter syntax.
-
-- Input:
-  - filter (string)(Optional): Filter to apply (e.g. 'category:security' or 'title:/encryption/i')
-
-### guardrails_control_run
-
-Run a Turbot Guardrails control by its ID.
-
-- Input:
-  - controlId (string): The ID of the control to run
-
-## Prerequisites
-
-- Node.js 20 or higher
-- A [Turbot Guardrails API](https://turbot.com/guardrails/docs/guides/using-guardrails/iam/access-keys#generate-a-new-guardrails-api-access-key) key with at least:
-
-  - `Turbot/ReadOnly` permissions in order to use the "guardrails_query" tool and list tools.
-  - `Turbot/Operator` permissions in order to execute controls using the "guardrails_control_run" tool.
-
-- The endpoint URL for your Guardrails workspace
+Guardrails MCP bridges AI assistants and your Guardrails environment, allowing natural language:
+- Querying and analyzing cloud resources using GraphQL
+- Listing and filtering resource, control, and policy types
+- Executing controls and reviewing compliance
+- Exploring GraphQL schemas for custom queries
+- Processing templates using Nunjucks for dynamic configurations
 
 ## Installation
 
-### Claude Desktop
+### Prerequisites
 
-[How to use MCP servers with Claude Desktop →](https://modelcontextprotocol.io/quickstart/user)
+- [Node.js](https://nodejs.org/) v20 or higher
+- A [Turbot Guardrails API](https://turbot.com/guardrails/docs/guides/using-guardrails/iam/access-keys#generate-a-new-guardrails-api-access-key) key with appropriate permissions
+- The endpoint URL for your Guardrails workspace
 
-Add the following configuration to the "mcpServers" section of your `claude_desktop_config.json`:
+### Configuration
+
+Add Guardrails MCP to your AI assistant's configuration file:
 
 ```json
 {
@@ -94,7 +28,7 @@ Add the following configuration to the "mcpServers" section of your `claude_desk
       "command": "npx",
       "args": ["-y", "github:turbot/guardrails-mcp"],
       "env": {
-        "TURBOT_GRAPHQL_ENDPOINT": "https://turbot.cloud.acme.com/api/latest/graphql",
+        "TURBOT_GRAPHQL_ENDPOINT": "https://demo-acme.cloud.turbot.com/api/latest/graphql",
         "TURBOT_ACCESS_KEY_ID": "abcdefgh-1234-0808-wxyz-123456789012",
         "TURBOT_SECRET_ACCESS_KEY": "hgfedcba-1234-0101-aaaa-aabbccddee00"
       }
@@ -103,41 +37,139 @@ Add the following configuration to the "mcpServers" section of your `claude_desk
 }
 ```
 
-## Local Development
+### AI Assistant Setup
+
+| Assistant        | Config File Location           | Setup Guide |
+|-----------------|-------------------------------|-------------|
+| Claude Desktop  | `claude_desktop_config.json`   | [Claude Desktop MCP Guide →](https://modelcontextprotocol.io/quickstart/user) |
+| Cursor          | `~/.cursor/mcp.json`           | [Cursor MCP Guide →](https://docs.cursor.com/context/model-context-protocol) |
+
+Save the configuration file and restart your AI assistant for the changes to take effect.
+
+## Prompting Guide
+
+Start by asking about your Guardrails environment, for example:
+```
+What AWS accounts can you see in Guardrails?
+```
+
+Simple, specific questions work well:
+```
+Show me all S3 buckets created in the last week
+```
+
+Generate compliance and security reports:
+```
+List all EC2 instances that are non-compliant with our tagging standards
+```
+
+Explore policy and control types:
+```
+Show me all policy types related to encryption
+List all control types for S3 buckets
+```
+
+Dive into resource details:
+```
+Show details for resource ID 1234567890
+```
+
+Remember to:
+- Be specific about which resources, controls, or policies you want to analyze
+- Use filters for categories, titles, or tags
+- Start with simple queries before adding complex conditions
+- Use natural language – the LLM will handle the GraphQL translation
+
+## Capabilities
+
+### Tools
+
+#### Core Query & Template Tools
+- **guardrails_query**
+  - Run any read-only GraphQL query in Guardrails.
+  - Input: `query` (string, required), `variables` (object, optional)
+- **guardrails_query_runnable**
+  - Run a GraphQL query against a specific runnable type and resource.
+  - Input: `runnableTypeUri` (string), `resourceId` (string), `query` (string), `variables` (object, optional)
+- **guardrails_query_runnable_introspection**
+  - Introspect the schema of a runnable type.
+  - Input: `runnableTypeUri` (string), `section` (string, optional: 'queryType', 'types', 'type'), `typeName` (string, required if section is 'type')
+- **guardrails_process_template**
+  - Render a Nunjucks template with provided input.
+  - Input: `template` (string), `input` (object, optional)
+
+#### Resource Operations
+- **guardrails_resource_list**
+  - List resources, with optional filter.
+  - Input: `filter` (string, optional)
+- **guardrails_resource_show**
+  - Show details for a specific resource.
+  - Input: `id` (string)
+- **guardrails_resource_type_list**
+  - List resource types, with optional filter.
+  - Input: `filter` (string, optional)
+- **guardrails_resource_type_show**
+  - Show details for a specific resource type.
+  - Input: `id` (string)
+
+#### Control Operations
+- **guardrails_control_list**
+  - List controls, with optional filter.
+  - Input: `filter` (string, optional)
+- **guardrails_control_show**
+  - Show details for a specific control.
+  - Input: `id` (string)
+- **guardrails_control_run**
+  - Run a control by its ID.
+  - Input: `controlId` (string)
+- **guardrails_control_type_list**
+  - List control types, with optional filter.
+  - Input: `filter` (string, optional)
+- **guardrails_control_type_show**
+  - Show details for a specific control type.
+  - Input: `id` (string)
+
+#### Policy Operations
+- **guardrails_policy_type_list**
+  - List policy types, with optional filter.
+  - Input: `filter` (string, optional)
+- **guardrails_policy_type_show**
+  - Show details for a specific policy type.
+  - Input: `id` (string)
+- **guardrails_policy_setting_list**
+  - List policy settings, with optional filter.
+  - Input: `filter` (string, optional)
+- **guardrails_policy_setting_show**
+  - Show details for a specific policy setting.
+  - Input: `id` (string)
+
+## Development
+
+### Clone and Setup
 
 1. Clone the repository and navigate to the directory:
-
    ```sh
    git clone https://github.com/turbot/guardrails-mcp.git
    cd guardrails-mcp
    ```
-
 2. Install dependencies:
-
-   ```
+   ```sh
    npm install
    ```
-
 3. Create a `.env` file with your Turbot Guardrails API credentials:
-
-   ```
+   ```sh
    cp .env.example .env
    # Edit .env with your API key
    ```
-
 4. Build the project:
-
-   ```
+   ```sh
    npm run build
    ```
-
 5. For development with auto-recompilation:
-
-```sh
-npm run watch
-```
-
-6. To use your local development version with Claude Desktop, update your `claude_desktop_config.json`:
+   ```sh
+   npm run watch
+   ```
+6. To use your local development version with Claude Desktop, update your config:
    ```json
    {
      "mcpServers": {
@@ -145,7 +177,7 @@ npm run watch
          "command": "node",
          "args": ["/full/path/to/guardrails-mcp/dist/index.js"],
          "env": {
-           "TURBOT_GRAPHQL_ENDPOINT": "https://turbot.cloud.acme.com/api/latest/graphql",
+           "TURBOT_GRAPHQL_ENDPOINT": "https://demo-acme.cloud.turbot.com/api/latest/graphql",
            "TURBOT_ACCESS_KEY_ID": "abcdefgh-1234-0808-wxyz-123456789012",
            "TURBOT_SECRET_ACCESS_KEY": "hgfedcba-1234-0101-aaaa-aabbccddee00"
          }
@@ -154,33 +186,16 @@ npm run watch
    }
    ```
 
-Replace `/path/to/your/workspace` with the absolute path to your local development directory. For example, if you cloned the repository to `~/src/guardrails-mcp`, you would use `~/src/guardrails-mcp/dist/index.js`.
+Replace `/full/path/to/guardrails-mcp` with the absolute path to your local development directory.
 
 ## Debugging
 
-- MCP Inspector
-
-  You can test the server with the [MCP Inspector](https://modelcontextprotocol.io/docs/tools/inspector):
-
-  First build the server,
-
-  ```
-  npm run build
-  ```
-
-  Use the following command to run the inspector
-
-  ```
-  npx @modelcontextprotocol/inspector node dist/index.js
-  ```
-
-* Logs
-
-  View the logs
-
-  ```
-  tail -n 20 -f ~/Library/Logs/Claude/mcp*.log
-  ```
+- **MCP Inspector**
+  - Test the server with the [MCP Inspector](https://modelcontextprotocol.io/docs/tools/inspector):
+    ```sh
+    npm run build
+    npx @modelcontextprotocol/inspector node dist/index.js
+    ```
 
 ## Troubleshooting
 
