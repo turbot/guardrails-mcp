@@ -64,4 +64,24 @@ export function formatGraphQLError(error: unknown, id: string): string {
     return `${error.name}: ${error.message}`;
   }
   return String(error);
+}
+
+/**
+ * Format a GraphQL result, logging and surfacing errors if present.
+ * @param result The GraphQL result object (with optional errors array)
+ * @param logger The logger to use for error logging
+ * @returns Formatted response object, with isError=true if errors are present
+ */
+export function formatGraphQLResultWithErrors(result: any, logger: any) {
+  if (result.errors?.length) {
+    result.errors.forEach((error: any) => {
+      logger.error({
+        error: error.message,
+        path: error.path,
+        locations: error.locations
+      }, "GraphQL execution error");
+    });
+    return formatJsonToolResponse(result, true);
+  }
+  return formatJsonToolResponse(result);
 } 
