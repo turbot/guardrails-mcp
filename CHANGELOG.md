@@ -1,3 +1,10 @@
+## v0.1.2 [2025-05-06]
+
+_What's new_
+
+* Fixed installation instructions in README
+
+
 ## v0.1.1 [2025-05-06]
 
 _What's new_
