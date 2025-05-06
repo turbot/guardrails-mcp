@@ -1,6 +1,6 @@
-# Guardrails Model Context Protocol (MCP) Server
+# Turbot Guardrails Model Context Protocol (MCP) Server
 
-Unlock the power of AI-driven cloud governance with Turbot Guardrails! This Model Context Protocol (MCP) server connects AI assistants like Claude to your Guardrails data, enabling natural language exploration, analysis, and automation across your cloud estate.
+Unlock the power of AI-driven cloud governance with [Turbot Guardrails](https://turbot.com/guardrails)! This Model Context Protocol (MCP) server connects AI assistants like Claude to your Guardrails data, enabling natural language exploration, analysis, and automation across your cloud estate.
 
 Guardrails MCP bridges AI assistants and your Guardrails environment, allowing natural language:
 - Querying and analyzing cloud resources using GraphQL
