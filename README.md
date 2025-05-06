@@ -26,7 +26,7 @@ Add Guardrails MCP to your AI assistant's configuration file:
   "mcpServers": {
     "turbot-guardrails": {
       "command": "npx",
-      "args": ["-y", "github:turbot/guardrails-mcp"],
+      "args": ["-y", "@turbot/guardrails-mcp"],
       "env": {
         "TURBOT_GRAPHQL_ENDPOINT": "https://demo-acme.cloud.turbot.com/api/latest/graphql",
         "TURBOT_ACCESS_KEY_ID": "abcdefgh-1234-0808-wxyz-123456789012",
