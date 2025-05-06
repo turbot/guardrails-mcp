@@ -1,6 +1,6 @@
 {
   "name": "@turbot/guardrails-mcp",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "MCP server for interacting with Turbot Guardrails.",
   "license": "Apache-2.0",
   "author": "Turbot HQ, Inc",
