@@ -3,6 +3,7 @@
 Unlock the power of AI-driven cloud governance with [Turbot Guardrails](https://turbot.com/guardrails)! This Model Context Protocol (MCP) server connects AI assistants like Claude to your Guardrails data, enabling natural language exploration, analysis, and automation across your cloud estate.
 
 Guardrails MCP bridges AI assistants and your Guardrails environment, allowing natural language:
+
 - Querying and analyzing cloud resources using GraphQL
 - Listing and filtering resource, control, and policy types
 - Executing controls and reviewing compliance
@@ -17,9 +18,62 @@ Guardrails MCP bridges AI assistants and your Guardrails environment, allowing n
 - A [Turbot Guardrails API](https://turbot.com/guardrails/docs/guides/using-guardrails/iam/access-keys#generate-a-new-guardrails-api-access-key) key with appropriate permissions
 - The endpoint URL for your Guardrails workspace
 
-### Configuration
+## Configuration
 
-Add Guardrails MCP to your AI assistant's configuration file:
+You can configure Guardrails MCP to authenticate with your Turbot Guardrails environment in **two ways**. The **preferred method** is using the Turbot CLI profile (YAML credentials), which is easier to manage. The direct environment variable method is available as an alternative.
+
+### 1. Turbot CLI Profile (YAML Credentials Method) — Preferred
+
+If you use the [Turbot CLI](https://turbot.com/guardrails/docs/reference/cli), you can authenticate using your CLI profile and credentials file.
+
+Set the following environment variables:
+
+```env
+TURBOT_CLI_PROFILE=your-profile-name
+# Optional: override the default credentials path
+# TURBOT_CLI_CREDENTIALS_PATH=/path/to/credentials.yml
+```
+
+- By default, the credentials file is expected at `~/.config/turbot/credentials.yml`.
+- The profile name should match a profile in your credentials file.
+
+**Example credentials.yml:**
+
+```yaml
+demo-acme:
+  workspace: https://demo-acme.cloud.turbot.com
+  accessKey: abcdefgh-1234-0808-wxyz-123456789012
+  secretKey: hgfedcba-1234-0101-aaaa-aabbccddee00
+```
+
+### 2. Direct Environment Variables (API Key Method)
+
+Alternatively, you can set the following environment variables (e.g., in your `.env` file or your AI assistant config):
+
+```env
+TURBOT_GRAPHQL_ENDPOINT=https://demo-acme.cloud.turbot.com/api/latest/graphql
+TURBOT_ACCESS_KEY_ID=abcdefgh-1234-0808-wxyz-123456789012
+TURBOT_SECRET_ACCESS_KEY=hgfedcba-1234-0101-aaaa-aabbccddee00
+```
+
+### .env Example
+
+```env
+# Preferred: CLI profile credentials
+TURBOT_CLI_PROFILE=your-profile-name
+# TURBOT_CLI_CREDENTIALS_PATH=/custom/path/to/credentials.yml
+
+# OR Direct API credentials
+TURBOT_GRAPHQL_ENDPOINT=https://demo-acme.cloud.turbot.com/api/latest/graphql
+TURBOT_ACCESS_KEY_ID=abcdefgh-1234-0808-wxyz-123456789012
+TURBOT_SECRET_ACCESS_KEY=hgfedcba-1234-0101-aaaa-aabbccddee00
+```
+
+---
+
+### Add Guardrails MCP to your AI assistant's configuration file
+
+Add the following to your AI assistant's configuration file, depending on your assistant (see table below):
 
 ```json
 {
@@ -28,53 +82,66 @@ Add Guardrails MCP to your AI assistant's configuration file:
       "command": "npx",
       "args": ["-y", "@turbot/guardrails-mcp"],
       "env": {
-        "TURBOT_GRAPHQL_ENDPOINT": "https://demo-acme.cloud.turbot.com/api/latest/graphql",
-        "TURBOT_ACCESS_KEY_ID": "abcdefgh-1234-0808-wxyz-123456789012",
-        "TURBOT_SECRET_ACCESS_KEY": "hgfedcba-1234-0101-aaaa-aabbccddee00"
+        // Preferred: CLI profile credentials
+        "TURBOT_CLI_PROFILE": "your-profile-name"
+        // "TURBOT_CLI_CREDENTIALS_PATH": "/custom/path/to/credentials.yml"
+        // OR (advanced/legacy): Direct API credentials
+        // "TURBOT_GRAPHQL_ENDPOINT": "https://demo-acme.cloud.turbot.com/api/latest/graphql",
+        // "TURBOT_ACCESS_KEY_ID": "abcdefgh-1234-0808-wxyz-123456789012",
+        // "TURBOT_SECRET_ACCESS_KEY": "hgfedcba-1234-0101-aaaa-aabbccddee00"
       }
     }
   }
 }
 ```
 
+- The CLI profile method is preferred and will be used if both methods are set.
+- For more details, see the [Configuration](#configuration) section above.
+
 ### AI Assistant Setup
 
-| Assistant        | Config File Location           | Setup Guide |
-|-----------------|-------------------------------|-------------|
-| Claude Desktop  | `claude_desktop_config.json`   | [Claude Desktop MCP Guide →](https://modelcontextprotocol.io/quickstart/user) |
-| Cursor          | `~/.cursor/mcp.json`           | [Cursor MCP Guide →](https://docs.cursor.com/context/model-context-protocol) |
+| Assistant      | Config File Location         | Setup Guide                                                                   |
+| -------------- | ---------------------------- | ----------------------------------------------------------------------------- |
+| Claude Desktop | `claude_desktop_config.json` | [Claude Desktop MCP Guide →](https://modelcontextprotocol.io/quickstart/user) |
+| Cursor         | `~/.cursor/mcp.json`         | [Cursor MCP Guide →](https://docs.cursor.com/context/model-context-protocol)  |
 
 Save the configuration file and restart your AI assistant for the changes to take effect.
 
 ## Prompting Guide
 
 Start by asking about your Guardrails environment, for example:
+
 ```
 What AWS accounts can you see in Guardrails?
 ```
 
 Simple, specific questions work well:
+
 ```
 Show me all S3 buckets created in the last week
 ```
 
 Generate compliance and security reports:
+
 ```
 List all EC2 instances that are non-compliant with our tagging standards
 ```
 
 Explore policy and control types:
+
 ```
 Show me all policy types related to encryption
 List all control types for S3 buckets
 ```
 
 Dive into resource details:
+
 ```
 Show details for resource ID 1234567890
 ```
 
 Remember to:
+
 - Be specific about which resources, controls, or policies you want to analyze
 - Use filters for categories, titles, or tags
 - Start with simple queries before adding complex conditions
@@ -85,6 +152,7 @@ Remember to:
 ### Tools
 
 #### Core Query & Template Tools
+
 - **guardrails_query**
   - Run any read-only GraphQL query in Guardrails.
   - Input: `query` (string, required), `variables` (object, optional)
@@ -99,6 +167,7 @@ Remember to:
   - Input: `template` (string), `input` (object, optional)
 
 #### Resource Operations
+
 - **guardrails_resource_list**
   - List resources, with optional filter.
   - Input: `filter` (string, optional)
@@ -113,6 +182,7 @@ Remember to:
   - Input: `id` (string)
 
 #### Control Operations
+
 - **guardrails_control_list**
   - List controls, with optional filter.
   - Input: `filter` (string, optional)
@@ -130,6 +200,7 @@ Remember to:
   - Input: `id` (string)
 
 #### Policy Operations
+
 - **guardrails_policy_type_list**
   - List policy types, with optional filter.
   - Input: `filter` (string, optional)
@@ -199,6 +270,10 @@ Replace `/full/path/to/guardrails-mcp` with the absolute path to your local deve
 
 ## Troubleshooting
 
-- **Authentication Errors**: Ensure your API key is correct and has the necessary permissions
-- **Connection Issues**: Verify the Guardrails endpoint URL is correct
-- **API Errors**: Check the server logs for detailed GraphQL error messages
+- **Missing Credentials Error:**  
+  If you see an error about missing environment variables or profiles, ensure you have set either all direct API credentials or the CLI profile and credentials file as described above.
+- **Profile Not Found:**  
+  If using the CLI profile method, make sure the profile exists in your credentials YAML file and the path is correct.
+- **Authentication Errors:** Ensure your API key is correct and has the necessary permissions
+- **Connection Issues:** Verify the Guardrails endpoint URL is correct
+- **API Errors:** Check the server logs for detailed GraphQL error messages
