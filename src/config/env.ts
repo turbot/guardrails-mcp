@@ -6,26 +6,26 @@ import { parse as parseYaml } from "yaml";
 dotenv.config();
 
 // Validate required environment variables
-const set1 = [
+const directEnvVars = [
   "TURBOT_GRAPHQL_ENDPOINT",
   "TURBOT_ACCESS_KEY_ID",
   "TURBOT_SECRET_ACCESS_KEY",
 ];
 const CLI_CREDENTIALS_DEFAULT_PATH = process.env.HOME ? `${process.env.HOME}/.config/turbot/credentials.yml` : null;
-const set2 = [
+const cliCredentialVars = [
   // TURBOT_CLI_CREDENTIALS_PATH is optional, will use default if not set
   "TURBOT_CLI_PROFILE",
 ];
 
-const hasSet1 = set1.every((envVar) => !!process.env[envVar]);
+const hasDirectEnvVars = directEnvVars.every((envVar) => !!process.env[envVar]);
 
 // Determine if CLI credentials are valid
-let hasSet2 = false;
+let hasCliCredentialVars = false;
 if (process.env["TURBOT_CLI_PROFILE"]) {
   if (CLI_CREDENTIALS_DEFAULT_PATH) {
-    hasSet2 = true;
+    hasCliCredentialVars = true;
   } else if (process.env["TURBOT_CLI_CREDENTIALS_PATH"]) {
-    hasSet2 = true;
+    hasCliCredentialVars = true;
   } else {
     throw new Error(
       `TURBOT_CLI_CREDENTIALS_PATH is required because the default credentials path could not be determined (HOME is not set).`
@@ -33,17 +33,17 @@ if (process.env["TURBOT_CLI_PROFILE"]) {
   }
 }
 
-if (!hasSet1 && !hasSet2) {
+if (!hasDirectEnvVars && !hasCliCredentialVars) {
   // Determine which set is missing and throw a specific error
   if (!process.env["TURBOT_CLI_PROFILE"]) {
     throw new Error(
-      `Missing required environment variables for direct credentials: [${set1.join(", ")}].\n` +
+      `Missing required environment variables for direct credentials: [${directEnvVars.join(", ")}].\n` +
       `Alternatively, set TURBOT_CLI_PROFILE (and optionally TURBOT_CLI_CREDENTIALS_PATH if the default path is not available).`
     );
   } else {
     throw new Error(
       `Missing required environment variables for CLI credentials: TURBOT_CLI_PROFILE (and credentials file/profile must exist).\n` +
-      `Alternatively, set all of [${set1.join(", ")}].`
+      `Alternatively, set all of [${directEnvVars.join(", ")}].`
     );
   }
 }
@@ -63,7 +63,7 @@ let config = {
 } as Config;
 
 // If using CLI credentials, read and parse the YAML file and extract credentials for the profile
-if (hasSet2) {
+if (hasCliCredentialVars) {
   const credentialsPath = process.env["TURBOT_CLI_CREDENTIALS_PATH"] || CLI_CREDENTIALS_DEFAULT_PATH;
   const profile = process.env["TURBOT_CLI_PROFILE"];
   if (!credentialsPath) {
