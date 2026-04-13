@@ -18,62 +18,13 @@ Guardrails MCP bridges AI assistants and your Guardrails environment, allowing n
 - A [Turbot Guardrails API](https://turbot.com/guardrails/docs/guides/using-guardrails/iam/access-keys#generate-a-new-guardrails-api-access-key) key with appropriate permissions
 - The endpoint URL for your Guardrails workspace
 
-## Configuration
+### Configuration
 
-You can configure Guardrails MCP to authenticate with your Turbot Guardrails environment in **two ways**. The **preferred method** is using the Turbot CLI profile (YAML credentials), which is easier to manage. The direct environment variable method is available as an alternative.
+Guardrails MCP supports two authentication methods. The **Turbot CLI profile** method is preferred because it keeps secrets out of your AI assistant configuration file — credentials are resolved from your existing `~/.config/turbot/credentials.yml` at runtime.
 
-### 1. Turbot CLI Profile (YAML Credentials Method) — Preferred
+#### Preferred: Turbot CLI profile
 
-If you use the [Turbot CLI](https://turbot.com/guardrails/docs/reference/cli), you can authenticate using your CLI profile and credentials file.
-
-Set the following environment variables:
-
-```env
-TURBOT_CLI_PROFILE=your-profile-name
-# Optional: override the default credentials path
-# TURBOT_CLI_CREDENTIALS_PATH=/path/to/credentials.yml
-```
-
-- By default, the credentials file is expected at `~/.config/turbot/credentials.yml`.
-- The profile name should match a profile in your credentials file.
-
-**Example credentials.yml:**
-
-```yaml
-demo-acme:
-  workspace: https://demo-acme.cloud.turbot.com
-  accessKey: abcdefgh-1234-0808-wxyz-123456789012
-  secretKey: hgfedcba-1234-0101-aaaa-aabbccddee00
-```
-
-### 2. Direct Environment Variables (API Key Method)
-
-Alternatively, you can set the following environment variables (e.g., in your `.env` file or your AI assistant config):
-
-```env
-TURBOT_GRAPHQL_ENDPOINT=https://demo-acme.cloud.turbot.com/api/latest/graphql
-TURBOT_ACCESS_KEY_ID=abcdefgh-1234-0808-wxyz-123456789012
-TURBOT_SECRET_ACCESS_KEY=hgfedcba-1234-0101-aaaa-aabbccddee00
-```
-
-### .env Example
-
-```env
-# Preferred: CLI profile credentials
-TURBOT_CLI_PROFILE=your-profile-name
-# TURBOT_CLI_CREDENTIALS_PATH=/custom/path/to/credentials.yml
-
-# OR Direct API credentials
-TURBOT_GRAPHQL_ENDPOINT=https://demo-acme.cloud.turbot.com/api/latest/graphql
-TURBOT_ACCESS_KEY_ID=abcdefgh-1234-0808-wxyz-123456789012
-TURBOT_SECRET_ACCESS_KEY=hgfedcba-1234-0101-aaaa-aabbccddee00
-```
-
----
-
-### Add Guardrails MCP to your AI assistant's configuration file
-
-Add the following to your AI assistant's configuration file, depending on your assistant (see table below):
+If you use the [Turbot CLI](https://turbot.com/guardrails/docs/reference/cli), you already have a `credentials.yml` file with named profiles. Reference one of those profiles by name:
 
 ```json
 {
@@ -82,21 +33,45 @@ Add the following to your AI assistant's configuration file, depending on your a
       "command": "npx",
       "args": ["-y", "@turbot/guardrails-mcp"],
       "env": {
-        // Preferred: CLI profile credentials
         "TURBOT_CLI_PROFILE": "your-profile-name"
-        // "TURBOT_CLI_CREDENTIALS_PATH": "/custom/path/to/credentials.yml"
-        // OR (advanced/legacy): Direct API credentials
-        // "TURBOT_GRAPHQL_ENDPOINT": "https://demo-acme.cloud.turbot.com/api/latest/graphql",
-        // "TURBOT_ACCESS_KEY_ID": "abcdefgh-1234-0808-wxyz-123456789012",
-        // "TURBOT_SECRET_ACCESS_KEY": "hgfedcba-1234-0101-aaaa-aabbccddee00"
       }
     }
   }
 }
 ```
 
-- The CLI profile method is preferred and will be used if both methods are set.
-- For more details, see the [Configuration](#configuration) section above.
+By default, the MCP reads credentials from `~/.config/turbot/credentials.yml`. To use a different location, set `TURBOT_CLI_CREDENTIALS_PATH`.
+
+Example `credentials.yml`:
+
+```yaml
+demo-acme:
+  workspace: https://demo-acme.cloud.turbot.com
+  accessKey: abcdefgh-1234-0808-wxyz-123456789012
+  secretKey: hgfedcba-1234-0101-aaaa-aabbccddee00
+```
+
+#### Alternative: direct environment variables
+
+Set all three credential variables directly in the MCP server configuration:
+
+```json
+{
+  "mcpServers": {
+    "turbot-guardrails": {
+      "command": "npx",
+      "args": ["-y", "@turbot/guardrails-mcp"],
+      "env": {
+        "TURBOT_GRAPHQL_ENDPOINT": "https://demo-acme.cloud.turbot.com/api/latest/graphql",
+        "TURBOT_ACCESS_KEY_ID": "abcdefgh-1234-0808-wxyz-123456789012",
+        "TURBOT_SECRET_ACCESS_KEY": "hgfedcba-1234-0101-aaaa-aabbccddee00"
+      }
+    }
+  }
+}
+```
+
+If both methods are configured, the Turbot CLI profile takes precedence.
 
 ### AI Assistant Setup
 
@@ -227,7 +202,14 @@ Remember to:
    ```sh
    npm install
    ```
-3. Create a `.env` file with your Turbot Guardrails API credentials:
+3. Create a `.env` file with your credentials. You can use either method:
+
+   Preferred — Turbot CLI profile:
+   ```sh
+   echo "TURBOT_CLI_PROFILE=your-profile-name" > .env
+   ```
+
+   Alternative — direct credentials:
    ```sh
    cp .env.example .env
    # Edit .env with your API key
@@ -240,7 +222,7 @@ Remember to:
    ```sh
    npm run watch
    ```
-6. To use your local development version with Claude Desktop, update your config:
+6. To use your local development version with Claude Desktop, update your config to point at the built `dist/index.js`:
    ```json
    {
      "mcpServers": {
@@ -248,16 +230,14 @@ Remember to:
          "command": "node",
          "args": ["/full/path/to/guardrails-mcp/dist/index.js"],
          "env": {
-           "TURBOT_GRAPHQL_ENDPOINT": "https://demo-acme.cloud.turbot.com/api/latest/graphql",
-           "TURBOT_ACCESS_KEY_ID": "abcdefgh-1234-0808-wxyz-123456789012",
-           "TURBOT_SECRET_ACCESS_KEY": "hgfedcba-1234-0101-aaaa-aabbccddee00"
+           "TURBOT_CLI_PROFILE": "your-profile-name"
          }
        }
      }
    }
    ```
 
-Replace `/full/path/to/guardrails-mcp` with the absolute path to your local development directory.
+   Replace `/full/path/to/guardrails-mcp` with the absolute path to your local development directory.
 
 ## Debugging
 
@@ -270,10 +250,9 @@ Replace `/full/path/to/guardrails-mcp` with the absolute path to your local deve
 
 ## Troubleshooting
 
-- **Missing Credentials Error:**  
-  If you see an error about missing environment variables or profiles, ensure you have set either all direct API credentials or the CLI profile and credentials file as described above.
-- **Profile Not Found:**  
-  If using the CLI profile method, make sure the profile exists in your credentials YAML file and the path is correct.
-- **Authentication Errors:** Ensure your API key is correct and has the necessary permissions
-- **Connection Issues:** Verify the Guardrails endpoint URL is correct
-- **API Errors:** Check the server logs for detailed GraphQL error messages
+- **Missing credentials:** Ensure you have set either `TURBOT_CLI_PROFILE` or all three direct credential variables (`TURBOT_GRAPHQL_ENDPOINT`, `TURBOT_ACCESS_KEY_ID`, `TURBOT_SECRET_ACCESS_KEY`).
+- **Profile not found:** Verify the profile name matches an entry in your credentials file, and that the file path is correct (`~/.config/turbot/credentials.yml` by default).
+- **Profile missing fields:** Each profile in `credentials.yml` must include `workspace`, `accessKey`, and `secretKey`.
+- **Authentication errors:** Ensure your API key is correct and has the necessary permissions.
+- **Connection issues:** Verify the Guardrails endpoint URL is correct.
+- **API errors:** Check the server logs for detailed GraphQL error messages.
