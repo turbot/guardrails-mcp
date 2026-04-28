@@ -1,26 +1,17 @@
 import dotenv from "dotenv";
+import { resolveConfig } from "./credentialResolver.js";
 
 // Load environment variables from .env file
 dotenv.config();
 
-// Validate required environment variables
-const requiredEnvVars = [
-  "TURBOT_GRAPHQL_ENDPOINT",
-  "TURBOT_ACCESS_KEY_ID",
-  "TURBOT_SECRET_ACCESS_KEY",
-];
+const resolved = resolveConfig();
 
-for (const envVar of requiredEnvVars) {
-  if (!process.env[envVar]) {
-    throw new Error(`❌ Missing required environment variable: ${envVar}`);
-  }
-}
-
-// Export validated environment variables
-const config = {
-  TURBOT_GRAPHQL_ENDPOINT: process.env.TURBOT_GRAPHQL_ENDPOINT!,
-  TURBOT_ACCESS_KEY_ID: process.env.TURBOT_ACCESS_KEY_ID!,
-  TURBOT_SECRET_ACCESS_KEY: process.env.TURBOT_SECRET_ACCESS_KEY!,
+// Metadata about which credential method resolved at startup. Exposed so
+// index.ts can report it in startup logs without re-deriving.
+export const configSource = {
+  authMethod: resolved.authMethod,
+  profile: resolved.profile,
+  credentialsPath: resolved.credentialsPath,
 };
 
-export default config;
+export default resolved.config;

@@ -2,7 +2,8 @@
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import config from "./config/env.js";
+import config, { configSource } from "./config/env.js";
+import { insecureEndpointWarning } from "./utils/credentialRedaction.js";
 import { logger } from "./services/pinoLogger.js";
 import { setupResources, resourceCapabilities } from "./resources/index.js";
 import { setupResourceTemplates, resourceTemplates } from "./resourceTemplates/index.js";
@@ -85,6 +86,23 @@ async function main() {
     const totalTime = Date.now() - startTime;
     logger.info(`Server started successfully (total initialization time: ${totalTime}ms)`);
     logger.info(`GraphQL Endpoint: ${config.TURBOT_GRAPHQL_ENDPOINT}`);
+
+    // Tell the user which credential method resolved, so "wrong workspace"
+    // misconfiguration is debuggable from a single log line.
+    if (configSource.authMethod === "cli-profile") {
+      logger.info(
+        `Authenticated via Turbot CLI profile '${configSource.profile}' (from ${configSource.credentialsPath})`
+      );
+    } else {
+      logger.info("Authenticated via direct environment variables");
+    }
+
+    const insecureWarning = insecureEndpointWarning(
+      config.TURBOT_GRAPHQL_ENDPOINT,
+    );
+    if (insecureWarning) {
+      logger.warn(insecureWarning);
+    }
   } catch (error) {
     logger.error('Failed to start server:', error);
     process.exit(1);
