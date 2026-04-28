@@ -3,6 +3,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import config, { configSource } from "./config/env.js";
+import { insecureEndpointWarning } from "./utils/credentialRedaction.js";
 import { logger } from "./services/pinoLogger.js";
 import { setupResources, resourceCapabilities } from "./resources/index.js";
 import { setupResourceTemplates, resourceTemplates } from "./resourceTemplates/index.js";
@@ -96,14 +97,11 @@ async function main() {
       logger.info("Authenticated via direct environment variables");
     }
 
-    // Warn loudly if the endpoint isn't HTTPS — Basic auth credentials would
-    // travel in plaintext. This catches accidental http:// in user configs;
-    // local dev against an http://localhost endpoint will still work, just
-    // with a warning.
-    if (!config.TURBOT_GRAPHQL_ENDPOINT.startsWith("https://")) {
-      logger.warn(
-        `Endpoint does not use HTTPS — credentials will be transmitted in plaintext: ${config.TURBOT_GRAPHQL_ENDPOINT}`
-      );
+    const insecureWarning = insecureEndpointWarning(
+      config.TURBOT_GRAPHQL_ENDPOINT,
+    );
+    if (insecureWarning) {
+      logger.warn(insecureWarning);
     }
   } catch (error) {
     logger.error('Failed to start server:', error);

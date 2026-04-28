@@ -54,3 +54,51 @@ describe("redactCredentials (live module, bound to the running config)", () => {
     assert.equal(out, "[REDACTED] and again [REDACTED]");
   });
 });
+
+describe("insecureEndpointWarning", () => {
+  let insecureEndpointWarning: (endpoint: string) => string | null;
+
+  before(async () => {
+    ({ insecureEndpointWarning } = await import(
+      "../src/utils/credentialRedaction.js"
+    ));
+  });
+
+  it("returns null for lowercase https://", () => {
+    assert.equal(
+      insecureEndpointWarning("https://acme.cloud.turbot.com/api/latest/graphql"),
+      null,
+    );
+  });
+
+  it("returns null for uppercase HTTPS:// (regression: prefix-match bug)", () => {
+    assert.equal(
+      insecureEndpointWarning("HTTPS://acme.cloud.turbot.com/api/latest/graphql"),
+      null,
+    );
+  });
+
+  it("returns null for mixed-case Https://", () => {
+    assert.equal(
+      insecureEndpointWarning("Https://acme.cloud.turbot.com/api/latest/graphql"),
+      null,
+    );
+  });
+
+  it("returns a warning for http://", () => {
+    const warning = insecureEndpointWarning("http://localhost:3000/api/latest/graphql");
+    assert.match(warning ?? "", /does not use HTTPS/);
+    assert.match(warning ?? "", /plaintext/);
+    assert.match(warning ?? "", /http:\/\/localhost/);
+  });
+
+  it("returns a warning for uppercase HTTP:// (case-insensitive)", () => {
+    const warning = insecureEndpointWarning("HTTP://localhost:3000/api/latest/graphql");
+    assert.match(warning ?? "", /does not use HTTPS/);
+  });
+
+  it("returns null on unparseable URLs (let the graphql client error)", () => {
+    assert.equal(insecureEndpointWarning("not a url"), null);
+    assert.equal(insecureEndpointWarning(""), null);
+  });
+});

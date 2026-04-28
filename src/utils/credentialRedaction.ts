@@ -1,6 +1,25 @@
 import config from "../config/env.js";
 import { redactStrings } from "./redact.js";
 
+// Returns a user-facing warning string if the endpoint would transmit
+// credentials over a non-secure channel, or null otherwise. Pure function so
+// it can be tested directly without booting the server. Uses URL.protocol
+// rather than string prefix matching, so uppercase schemes (HTTPS://) are
+// correctly recognised. Returns null on unparseable URLs because the GraphQL
+// client will produce a clearer error than we can; don't double-warn.
+export function insecureEndpointWarning(endpoint: string): string | null {
+  let protocol: string;
+  try {
+    protocol = new URL(endpoint).protocol;
+  } catch {
+    return null;
+  }
+  if (protocol === "https:") {
+    return null;
+  }
+  return `Endpoint does not use HTTPS — credentials will be transmitted in plaintext: ${endpoint}`;
+}
+
 const { TURBOT_ACCESS_KEY_ID, TURBOT_SECRET_ACCESS_KEY } = config;
 
 // Values that must never leak through any user-visible output. Includes the
