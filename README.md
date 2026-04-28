@@ -40,7 +40,7 @@ If you use the [Turbot CLI](https://turbot.com/guardrails/docs/reference/cli), y
 }
 ```
 
-By default, the MCP reads credentials from `~/.config/turbot/credentials.yml`. To use a different location, set `TURBOT_CLI_CREDENTIALS_PATH`.
+By default, the MCP reads credentials from `~/.config/turbot/credentials.yml`. To use a different location, set `TURBOT_CLI_CREDENTIALS_PATH` — `~` is expanded automatically (so `~/Documents/turbot.yml` works inside JSON configs that don't go through a shell).
 
 Example `credentials.yml`:
 
@@ -72,6 +72,8 @@ Set all three credential variables directly in the MCP server configuration:
 ```
 
 If both methods are configured, the Turbot CLI profile takes precedence.
+
+For `TURBOT_GRAPHQL_ENDPOINT` (and the `workspace` field in `credentials.yml`) the bare workspace URL is also accepted — the `/api/latest/graphql` suffix is added automatically if missing, and trailing slashes are stripped.
 
 ### AI Assistant Setup
 
@@ -250,9 +252,21 @@ Remember to:
 
 ## Troubleshooting
 
+The server logs which credential method resolved at startup, so you can confirm the right path was taken:
+
+```
+Authenticated via Turbot CLI profile 'demo-acme' (from /Users/you/.config/turbot/credentials.yml)
+```
+or
+```
+Authenticated via direct environment variables
+```
+
+A warning is logged if the resolved endpoint does not use HTTPS, since Basic auth credentials would travel in plaintext.
+
 - **Missing credentials:** Ensure you have set either `TURBOT_CLI_PROFILE` or all three direct credential variables (`TURBOT_GRAPHQL_ENDPOINT`, `TURBOT_ACCESS_KEY_ID`, `TURBOT_SECRET_ACCESS_KEY`).
 - **Profile not found:** Verify the profile name matches an entry in your credentials file, and that the file path is correct (`~/.config/turbot/credentials.yml` by default).
 - **Profile missing fields:** Each profile in `credentials.yml` must include `workspace`, `accessKey`, and `secretKey`.
-- **Authentication errors:** Ensure your API key is correct and has the necessary permissions.
+- **Authentication errors:** Ensure your API key is correct and has the necessary permissions. Credential values are redacted from any error message returned to your AI assistant.
 - **Connection issues:** Verify the Guardrails endpoint URL is correct.
 - **API errors:** Check the server logs for detailed GraphQL error messages.
