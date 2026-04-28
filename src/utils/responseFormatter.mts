@@ -1,4 +1,5 @@
 import { formatJson } from './jsonFormatter.mjs';
+import { redactCredentials } from './credentialRedaction.js';
 
 interface ToolResponse {
   [key: string]: unknown;
@@ -68,20 +69,39 @@ export function formatGraphQLError(error: unknown, id: string): string {
 
 /**
  * Format a GraphQL result, logging and surfacing errors if present.
+ * Error messages are passed through credential redaction before being logged
+ * or returned to the MCP client — guards against credentials being echoed in
+ * 200-with-errors GraphQL responses (e.g. permission-denied messages that
+ * include the access key value). Data fields are not redacted: if the user
+ * explicitly queried for a field that happens to contain a credential value,
+ * we honour that.
  * @param result The GraphQL result object (with optional errors array)
  * @param logger The logger to use for error logging
  * @returns Formatted response object, with isError=true if errors are present
  */
 export function formatGraphQLResultWithErrors(result: any, logger: any) {
   if (result.errors?.length) {
-    result.errors.forEach((error: any) => {
-      logger.error({
-        error: error.message,
-        path: error.path,
-        locations: error.locations
-      }, "GraphQL execution error");
+    const redactedErrors = result.errors.map((error: any) => ({
+      ...error,
+      message:
+        typeof error.message === 'string'
+          ? redactCredentials(error.message)
+          : error.message,
+    }));
+    redactedErrors.forEach((error: any) => {
+      logger.error(
+        {
+          error: error.message,
+          path: error.path,
+          locations: error.locations,
+        },
+        'GraphQL execution error',
+      );
     });
-    return formatJsonToolResponse(result, true);
+    return formatJsonToolResponse(
+      { ...result, errors: redactedErrors },
+      true,
+    );
   }
   return formatJsonToolResponse(result);
-} 
+}

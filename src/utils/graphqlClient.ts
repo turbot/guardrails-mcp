@@ -1,17 +1,8 @@
 import { GraphQLClient } from "graphql-request";
 import config from "../config/env.js";
-import { redactStrings } from "./redact.js";
+import { redactCredentials } from "./credentialRedaction.js";
 
 const { TURBOT_GRAPHQL_ENDPOINT, TURBOT_ACCESS_KEY_ID, TURBOT_SECRET_ACCESS_KEY } = config;
-
-// Values that must never leak through error messages. Includes the base64
-// auth header form so we're covered even if a future upstream/library version
-// echoes request headers in errors. Frozen to prevent accidental mutation.
-const CREDENTIAL_SECRETS: readonly string[] = Object.freeze([
-  TURBOT_ACCESS_KEY_ID,
-  TURBOT_SECRET_ACCESS_KEY,
-  btoa(`${TURBOT_ACCESS_KEY_ID}:${TURBOT_SECRET_ACCESS_KEY}`),
-]);
 
 // Create a base URL from the endpoint
 const baseUrl = new URL(TURBOT_GRAPHQL_ENDPOINT);
@@ -40,10 +31,11 @@ function createGraphQLClient(customEndpoint?: string) {
 // final redaction pass over credential values. Exported for unit testing —
 // the redaction is the last line of defence against upstream services or
 // libraries that may echo credentials in error payloads, so it must be
-// directly verifiable.
+// directly verifiable. The optional `redact` parameter lets tests substitute
+// a fake redactor; production callers always use the live one.
 export function formatGraphQLError(
   error: any,
-  secrets: readonly string[] = CREDENTIAL_SECRETS,
+  redact: (s: string) => string = redactCredentials,
 ): string {
   let message: string;
   if (error.response?.errors) {
@@ -71,7 +63,7 @@ export function formatGraphQLError(
   } else {
     message = error.message || String(error);
   }
-  return redactStrings(message, secrets);
+  return redact(message);
 }
 
 // Helper function to execute GraphQL queries

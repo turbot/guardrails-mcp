@@ -17,8 +17,9 @@ before(() => {
 describe("formatGraphQLError", () => {
   let formatGraphQLError: (
     error: unknown,
-    secrets?: readonly string[],
+    redact?: (s: string) => string,
   ) => string;
+  const identity = (s: string) => s;
 
   before(async () => {
     ({ formatGraphQLError } = await import(
@@ -39,7 +40,7 @@ describe("formatGraphQLError", () => {
         ],
       },
     };
-    const out = formatGraphQLError(error, []);
+    const out = formatGraphQLError(error, identity);
     assert.match(out, /Field 'foo' not found/);
     assert.match(out, /\(line 3, column 7\)/);
     assert.match(out, /at path: query\.foo/);
@@ -48,7 +49,7 @@ describe("formatGraphQLError", () => {
 
   it("falls through to error.message when there are no GraphQL errors", () => {
     const error = new Error("network down");
-    const out = formatGraphQLError(error, []);
+    const out = formatGraphQLError(error, identity);
     assert.equal(out, "network down");
   });
 
@@ -104,13 +105,13 @@ describe("formatGraphQLError", () => {
   });
 
   it("handles errors that are bare strings", () => {
-    const out = formatGraphQLError("unexpected", []);
+    const out = formatGraphQLError("unexpected", identity);
     assert.equal(out, "unexpected");
   });
 
   it("returns 'undefined' fallback when no message and no string form available", () => {
     // error.message undefined, String(error) === "[object Object]"
-    const out = formatGraphQLError({}, []);
+    const out = formatGraphQLError({}, identity);
     assert.equal(out, "[object Object]");
   });
 });

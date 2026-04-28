@@ -2,7 +2,7 @@
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import config from "./config/env.js";
+import config, { configSource } from "./config/env.js";
 import { logger } from "./services/pinoLogger.js";
 import { setupResources, resourceCapabilities } from "./resources/index.js";
 import { setupResourceTemplates, resourceTemplates } from "./resourceTemplates/index.js";
@@ -85,6 +85,26 @@ async function main() {
     const totalTime = Date.now() - startTime;
     logger.info(`Server started successfully (total initialization time: ${totalTime}ms)`);
     logger.info(`GraphQL Endpoint: ${config.TURBOT_GRAPHQL_ENDPOINT}`);
+
+    // Tell the user which credential method resolved, so "wrong workspace"
+    // misconfiguration is debuggable from a single log line.
+    if (configSource.authMethod === "cli-profile") {
+      logger.info(
+        `Authenticated via Turbot CLI profile '${configSource.profile}' (from ${configSource.credentialsPath})`
+      );
+    } else {
+      logger.info("Authenticated via direct environment variables");
+    }
+
+    // Warn loudly if the endpoint isn't HTTPS — Basic auth credentials would
+    // travel in plaintext. This catches accidental http:// in user configs;
+    // local dev against an http://localhost endpoint will still work, just
+    // with a warning.
+    if (!config.TURBOT_GRAPHQL_ENDPOINT.startsWith("https://")) {
+      logger.warn(
+        `Endpoint does not use HTTPS — credentials will be transmitted in plaintext: ${config.TURBOT_GRAPHQL_ENDPOINT}`
+      );
+    }
   } catch (error) {
     logger.error('Failed to start server:', error);
     process.exit(1);
