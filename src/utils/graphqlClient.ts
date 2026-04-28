@@ -1,7 +1,17 @@
 import { GraphQLClient } from "graphql-request";
 import config from "../config/env.js";
+import { redactStrings } from "./redact.js";
 
 const { TURBOT_GRAPHQL_ENDPOINT, TURBOT_ACCESS_KEY_ID, TURBOT_SECRET_ACCESS_KEY } = config;
+
+// Values that must never leak through error messages. Includes the base64
+// auth header form so we're covered even if a future upstream/library version
+// echoes request headers in errors. Frozen to prevent accidental mutation.
+const CREDENTIAL_SECRETS: readonly string[] = Object.freeze([
+  TURBOT_ACCESS_KEY_ID,
+  TURBOT_SECRET_ACCESS_KEY,
+  btoa(`${TURBOT_ACCESS_KEY_ID}:${TURBOT_SECRET_ACCESS_KEY}`),
+]);
 
 // Create a base URL from the endpoint
 const baseUrl = new URL(TURBOT_GRAPHQL_ENDPOINT);
@@ -26,37 +36,42 @@ function createGraphQLClient(customEndpoint?: string) {
   });
 }
 
-// Helper function to format GraphQL errors
-function formatGraphQLError(error: any): string {
+// Builds a user-facing error message from a GraphQL request failure, with a
+// final redaction pass over credential values. Exported for unit testing —
+// the redaction is the last line of defence against upstream services or
+// libraries that may echo credentials in error payloads, so it must be
+// directly verifiable.
+export function formatGraphQLError(
+  error: any,
+  secrets: readonly string[] = CREDENTIAL_SECRETS,
+): string {
+  let message: string;
   if (error.response?.errors) {
-    return error.response.errors.map((e: any) => {
-      let message = e.message;
-      
-      // Add location information if available
-      if (e.locations?.length > 0) {
-        const location = e.locations[0];
-        message += ` (line ${location.line}, column ${location.column})`;
-      }
-
-      // Add path information if available
-      if (e.path?.length > 0) {
-        message += ` at path: ${e.path.join('.')}`;
-      }
-
-      // Add extensions information if available
-      if (e.extensions) {
-        if (e.extensions.code) {
-          message += `\nError code: ${e.extensions.code}`;
+    message = error.response.errors
+      .map((e: any) => {
+        let line = e.message;
+        if (e.locations?.length > 0) {
+          const location = e.locations[0];
+          line += ` (line ${location.line}, column ${location.column})`;
         }
-        if (e.extensions.classification) {
-          message += `\nClassification: ${e.extensions.classification}`;
+        if (e.path?.length > 0) {
+          line += ` at path: ${e.path.join(".")}`;
         }
-      }
-
-      return message;
-    }).join("\n");
+        if (e.extensions) {
+          if (e.extensions.code) {
+            line += `\nError code: ${e.extensions.code}`;
+          }
+          if (e.extensions.classification) {
+            line += `\nClassification: ${e.extensions.classification}`;
+          }
+        }
+        return line;
+      })
+      .join("\n");
+  } else {
+    message = error.message || String(error);
   }
-  return error.message || String(error);
+  return redactStrings(message, secrets);
 }
 
 // Helper function to execute GraphQL queries
