@@ -9,10 +9,18 @@ import {
   resolveConfig,
 } from "../src/config/credentialResolver.js";
 
-const VALID_DIRECT_ENV = {
+// CLI-aligned (preferred) env vars used in most tests.
+const PREFERRED_DIRECT_ENV = {
+  TURBOT_WORKSPACE: "https://acme.cloud.turbot.com/api/latest/graphql",
+  TURBOT_ACCESS_KEY: "AK_PREFERRED",
+  TURBOT_SECRET_KEY: "SK_PREFERRED",
+} as const;
+
+// Legacy v0.1.x env vars — kept working for backward compatibility.
+const LEGACY_DIRECT_ENV = {
   TURBOT_GRAPHQL_ENDPOINT: "https://acme.cloud.turbot.com/api/latest/graphql",
-  TURBOT_ACCESS_KEY_ID: "AK_TEST",
-  TURBOT_SECRET_ACCESS_KEY: "SK_TEST",
+  TURBOT_ACCESS_KEY_ID: "AK_LEGACY",
+  TURBOT_SECRET_ACCESS_KEY: "SK_LEGACY",
 } as const;
 
 const SAMPLE_YAML = `
@@ -66,9 +74,6 @@ __proto__:
   secretKey: SK_EVIL
 `;
 
-// Defines a YAML anchor under "_template" and merges it into a real profile.
-// Verifies our access pattern reads merged values correctly without being
-// thrown by the anchor-only key.
 const ANCHOR_YAML = `
 _template: &base
   accessKey: AK_FROM_ANCHOR
@@ -178,16 +183,72 @@ describe("defaultCredentialsPath", () => {
   });
 });
 
-describe("resolveConfig — direct env vars", () => {
-  it("resolves when all three direct env vars are set", () => {
-    const resolved = resolveConfig({ env: { ...VALID_DIRECT_ENV } });
-    assert.deepEqual(resolved.config, { ...VALID_DIRECT_ENV });
+describe("resolveConfig — direct credentials (CLI-aligned names)", () => {
+  it("resolves when all three preferred env vars are set", () => {
+    const resolved = resolveConfig({ env: { ...PREFERRED_DIRECT_ENV } });
+    assert.deepEqual(resolved.config, {
+      TURBOT_GRAPHQL_ENDPOINT: PREFERRED_DIRECT_ENV.TURBOT_WORKSPACE,
+      TURBOT_ACCESS_KEY_ID: PREFERRED_DIRECT_ENV.TURBOT_ACCESS_KEY,
+      TURBOT_SECRET_ACCESS_KEY: PREFERRED_DIRECT_ENV.TURBOT_SECRET_KEY,
+    });
     assert.equal(resolved.authMethod, "direct-env");
-    assert.equal(resolved.profile, undefined);
-    assert.equal(resolved.credentialsPath, undefined);
   });
 
-  it("normalises a workspace-only TURBOT_GRAPHQL_ENDPOINT (no suffix)", () => {
+  it("normalises a workspace-only TURBOT_WORKSPACE (no GraphQL suffix)", () => {
+    const resolved = resolveConfig({
+      env: {
+        TURBOT_WORKSPACE: "https://acme.cloud.turbot.com",
+        TURBOT_ACCESS_KEY: "AK",
+        TURBOT_SECRET_KEY: "SK",
+      },
+    });
+    assert.equal(
+      resolved.config.TURBOT_GRAPHQL_ENDPOINT,
+      "https://acme.cloud.turbot.com/api/latest/graphql",
+    );
+  });
+
+  it("strips a trailing slash from TURBOT_WORKSPACE", () => {
+    const resolved = resolveConfig({
+      env: {
+        TURBOT_WORKSPACE: "https://acme.cloud.turbot.com/",
+        TURBOT_ACCESS_KEY: "AK",
+        TURBOT_SECRET_KEY: "SK",
+      },
+    });
+    assert.equal(
+      resolved.config.TURBOT_GRAPHQL_ENDPOINT,
+      "https://acme.cloud.turbot.com/api/latest/graphql",
+    );
+  });
+
+  it("trims whitespace from TURBOT_WORKSPACE", () => {
+    const resolved = resolveConfig({
+      env: {
+        TURBOT_WORKSPACE: "  https://acme.cloud.turbot.com  ",
+        TURBOT_ACCESS_KEY: "AK",
+        TURBOT_SECRET_KEY: "SK",
+      },
+    });
+    assert.equal(
+      resolved.config.TURBOT_GRAPHQL_ENDPOINT,
+      "https://acme.cloud.turbot.com/api/latest/graphql",
+    );
+  });
+});
+
+describe("resolveConfig — direct credentials (legacy v0.1.x names — backward compat)", () => {
+  it("resolves when all three legacy env vars are set", () => {
+    const resolved = resolveConfig({ env: { ...LEGACY_DIRECT_ENV } });
+    assert.deepEqual(resolved.config, {
+      TURBOT_GRAPHQL_ENDPOINT: LEGACY_DIRECT_ENV.TURBOT_GRAPHQL_ENDPOINT,
+      TURBOT_ACCESS_KEY_ID: LEGACY_DIRECT_ENV.TURBOT_ACCESS_KEY_ID,
+      TURBOT_SECRET_ACCESS_KEY: LEGACY_DIRECT_ENV.TURBOT_SECRET_ACCESS_KEY,
+    });
+    assert.equal(resolved.authMethod, "direct-env");
+  });
+
+  it("normalises TURBOT_GRAPHQL_ENDPOINT without the suffix", () => {
     const resolved = resolveConfig({
       env: {
         TURBOT_GRAPHQL_ENDPOINT: "https://acme.cloud.turbot.com",
@@ -201,61 +262,7 @@ describe("resolveConfig — direct env vars", () => {
     );
   });
 
-  it("strips trailing slash from TURBOT_GRAPHQL_ENDPOINT", () => {
-    const resolved = resolveConfig({
-      env: {
-        TURBOT_GRAPHQL_ENDPOINT: "https://acme.cloud.turbot.com/",
-        TURBOT_ACCESS_KEY_ID: "AK",
-        TURBOT_SECRET_ACCESS_KEY: "SK",
-      },
-    });
-    assert.equal(
-      resolved.config.TURBOT_GRAPHQL_ENDPOINT,
-      "https://acme.cloud.turbot.com/api/latest/graphql",
-    );
-  });
-
-  it("trims whitespace from TURBOT_GRAPHQL_ENDPOINT", () => {
-    const resolved = resolveConfig({
-      env: {
-        TURBOT_GRAPHQL_ENDPOINT: "  https://acme.cloud.turbot.com  ",
-        TURBOT_ACCESS_KEY_ID: "AK",
-        TURBOT_SECRET_ACCESS_KEY: "SK",
-      },
-    });
-    assert.equal(
-      resolved.config.TURBOT_GRAPHQL_ENDPOINT,
-      "https://acme.cloud.turbot.com/api/latest/graphql",
-    );
-  });
-
-  it("throws listing all missing vars when none are set", () => {
-    assert.throws(
-      () => resolveConfig({ env: {} }),
-      /TURBOT_GRAPHQL_ENDPOINT.*TURBOT_ACCESS_KEY_ID.*TURBOT_SECRET_ACCESS_KEY/s,
-    );
-  });
-
-  it("throws listing only the actually missing vars on partial config", () => {
-    assert.throws(
-      () =>
-        resolveConfig({
-          env: {
-            TURBOT_GRAPHQL_ENDPOINT: "https://x.example.com/api/latest/graphql",
-            TURBOT_ACCESS_KEY_ID: "AK",
-          },
-        }),
-      (err: unknown) => {
-        if (!(err instanceof Error)) return false;
-        assert.match(err.message, /TURBOT_SECRET_ACCESS_KEY/);
-        assert.doesNotMatch(err.message, /TURBOT_ACCESS_KEY_ID]/);
-        assert.match(err.message, /Alternatively, set TURBOT_CLI_PROFILE/);
-        return true;
-      },
-    );
-  });
-
-  it("treats empty-string env vars as missing", () => {
+  it("legacy treats empty-string env vars as missing", () => {
     assert.throws(
       () =>
         resolveConfig({
@@ -265,22 +272,249 @@ describe("resolveConfig — direct env vars", () => {
             TURBOT_SECRET_ACCESS_KEY: "",
           },
         }),
-      /Missing required environment variables/,
+      /Missing required Turbot credentials/,
+    );
+  });
+});
+
+describe("resolveConfig — alias precedence (preferred over legacy)", () => {
+  it("preferred TURBOT_WORKSPACE wins over legacy TURBOT_GRAPHQL_ENDPOINT", () => {
+    const resolved = resolveConfig({
+      env: {
+        TURBOT_WORKSPACE: "https://preferred.cloud.turbot.com",
+        TURBOT_GRAPHQL_ENDPOINT: "https://legacy.cloud.turbot.com",
+        TURBOT_ACCESS_KEY: "AK",
+        TURBOT_SECRET_KEY: "SK",
+      },
+    });
+    assert.equal(
+      resolved.config.TURBOT_GRAPHQL_ENDPOINT,
+      "https://preferred.cloud.turbot.com/api/latest/graphql",
     );
   });
 
-  it("treats an empty-string TURBOT_CLI_PROFILE as not set", () => {
+  it("preferred TURBOT_ACCESS_KEY wins over legacy TURBOT_ACCESS_KEY_ID", () => {
     const resolved = resolveConfig({
-      env: { TURBOT_CLI_PROFILE: "", ...VALID_DIRECT_ENV },
+      env: {
+        TURBOT_WORKSPACE: "https://x.example.com/api/latest/graphql",
+        TURBOT_ACCESS_KEY: "AK_PREFERRED",
+        TURBOT_ACCESS_KEY_ID: "AK_LEGACY",
+        TURBOT_SECRET_KEY: "SK",
+      },
+    });
+    assert.equal(resolved.config.TURBOT_ACCESS_KEY_ID, "AK_PREFERRED");
+  });
+
+  it("preferred TURBOT_SECRET_KEY wins over legacy TURBOT_SECRET_ACCESS_KEY", () => {
+    const resolved = resolveConfig({
+      env: {
+        TURBOT_WORKSPACE: "https://x.example.com/api/latest/graphql",
+        TURBOT_ACCESS_KEY: "AK",
+        TURBOT_SECRET_KEY: "SK_PREFERRED",
+        TURBOT_SECRET_ACCESS_KEY: "SK_LEGACY",
+      },
+    });
+    assert.equal(resolved.config.TURBOT_SECRET_ACCESS_KEY, "SK_PREFERRED");
+  });
+
+  it("falls through to legacy name when the preferred name is empty", () => {
+    const resolved = resolveConfig({
+      env: {
+        TURBOT_WORKSPACE: "",
+        TURBOT_GRAPHQL_ENDPOINT: "https://legacy.cloud.turbot.com",
+        TURBOT_ACCESS_KEY: "AK",
+        TURBOT_SECRET_KEY: "SK",
+      },
+    });
+    assert.equal(
+      resolved.config.TURBOT_GRAPHQL_ENDPOINT,
+      "https://legacy.cloud.turbot.com/api/latest/graphql",
+    );
+  });
+
+  it("falls through to legacy name when the preferred name is whitespace-only", () => {
+    const resolved = resolveConfig({
+      env: {
+        TURBOT_WORKSPACE: "   ",
+        TURBOT_GRAPHQL_ENDPOINT: "https://legacy.cloud.turbot.com",
+        TURBOT_ACCESS_KEY: "AK",
+        TURBOT_SECRET_KEY: "SK",
+      },
+    });
+    assert.equal(
+      resolved.config.TURBOT_GRAPHQL_ENDPOINT,
+      "https://legacy.cloud.turbot.com/api/latest/graphql",
+    );
+  });
+
+  it("accepts a mid-migration mixed config (preferred + legacy field-by-field)", () => {
+    const resolved = resolveConfig({
+      env: {
+        TURBOT_WORKSPACE: "https://mixed.cloud.turbot.com",
+        TURBOT_ACCESS_KEY_ID: "AK_LEGACY",
+        TURBOT_SECRET_KEY: "SK_PREFERRED",
+      },
+    });
+    assert.deepEqual(resolved.config, {
+      TURBOT_GRAPHQL_ENDPOINT: "https://mixed.cloud.turbot.com/api/latest/graphql",
+      TURBOT_ACCESS_KEY_ID: "AK_LEGACY",
+      TURBOT_SECRET_ACCESS_KEY: "SK_PREFERRED",
     });
     assert.equal(resolved.authMethod, "direct-env");
   });
+});
 
-  it("treats whitespace-only TURBOT_CLI_PROFILE as not set", () => {
+describe("resolveConfig — precedence between direct creds and profile (CLI-aligned)", () => {
+  it("a complete direct triple wins over a set profile (matches Turbot CLI)", () => {
     const resolved = resolveConfig({
-      env: { TURBOT_CLI_PROFILE: "   ", ...VALID_DIRECT_ENV },
+      env: {
+        TURBOT_PROFILE: "demo-acme",
+        TURBOT_CLI_CREDENTIALS_PATH: "/fake/path.yml",
+        TURBOT_WORKSPACE: "https://direct-wins.cloud.turbot.com",
+        TURBOT_ACCESS_KEY: "AK_DIRECT_WINS",
+        TURBOT_SECRET_KEY: "SK_DIRECT_WINS",
+      },
+      readFile: stubReadFile(SAMPLE_YAML),
     });
     assert.equal(resolved.authMethod, "direct-env");
+    assert.equal(resolved.config.TURBOT_ACCESS_KEY_ID, "AK_DIRECT_WINS");
+    assert.equal(resolved.config.TURBOT_SECRET_ACCESS_KEY, "SK_DIRECT_WINS");
+  });
+
+  it("legacy direct triple also wins over a profile (back-compat for v0.1.x configs)", () => {
+    const resolved = resolveConfig({
+      env: {
+        TURBOT_CLI_PROFILE: "demo-acme",
+        TURBOT_CLI_CREDENTIALS_PATH: "/fake/path.yml",
+        TURBOT_GRAPHQL_ENDPOINT: "https://legacy-wins.cloud.turbot.com/api/latest/graphql",
+        TURBOT_ACCESS_KEY_ID: "AK_LEGACY_WINS",
+        TURBOT_SECRET_ACCESS_KEY: "SK_LEGACY_WINS",
+      },
+      readFile: stubReadFile(SAMPLE_YAML),
+    });
+    assert.equal(resolved.authMethod, "direct-env");
+    assert.equal(resolved.config.TURBOT_ACCESS_KEY_ID, "AK_LEGACY_WINS");
+  });
+
+  it("profile is used when direct triple is incomplete (missing one var)", () => {
+    const resolved = resolveConfig({
+      env: {
+        TURBOT_PROFILE: "demo-acme",
+        TURBOT_CLI_CREDENTIALS_PATH: "/fake/path.yml",
+        TURBOT_WORKSPACE: "https://incomplete.cloud.turbot.com",
+        TURBOT_ACCESS_KEY: "AK_PARTIAL",
+        // TURBOT_SECRET_KEY missing
+      },
+      readFile: stubReadFile(SAMPLE_YAML),
+    });
+    assert.equal(resolved.authMethod, "cli-profile");
+    assert.equal(resolved.config.TURBOT_ACCESS_KEY_ID, "AK_GOOD");
+  });
+
+  it("profile is used when direct triple has an empty value", () => {
+    const resolved = resolveConfig({
+      env: {
+        TURBOT_PROFILE: "demo-acme",
+        TURBOT_CLI_CREDENTIALS_PATH: "/fake/path.yml",
+        TURBOT_WORKSPACE: "https://x.example.com",
+        TURBOT_ACCESS_KEY: "AK",
+        TURBOT_SECRET_KEY: "",
+      },
+      readFile: stubReadFile(SAMPLE_YAML),
+    });
+    assert.equal(resolved.authMethod, "cli-profile");
+  });
+});
+
+describe("resolveConfig — profile name aliases", () => {
+  it("preferred TURBOT_PROFILE wins over legacy TURBOT_CLI_PROFILE", () => {
+    const resolved = resolveConfig({
+      env: {
+        TURBOT_PROFILE: "demo-acme",
+        TURBOT_CLI_PROFILE: "demo-trailing-slash",
+        TURBOT_CLI_CREDENTIALS_PATH: "/fake/path.yml",
+      },
+      readFile: stubReadFile(SAMPLE_YAML),
+    });
+    assert.equal(resolved.profile, "demo-acme");
+    assert.equal(resolved.config.TURBOT_ACCESS_KEY_ID, "AK_GOOD");
+  });
+
+  it("falls back to TURBOT_CLI_PROFILE when TURBOT_PROFILE is unset", () => {
+    const resolved = resolveConfig({
+      env: {
+        TURBOT_CLI_PROFILE: "demo-acme",
+        TURBOT_CLI_CREDENTIALS_PATH: "/fake/path.yml",
+      },
+      readFile: stubReadFile(SAMPLE_YAML),
+    });
+    assert.equal(resolved.profile, "demo-acme");
+  });
+
+  it("treats an empty TURBOT_PROFILE as not set, falling through to TURBOT_CLI_PROFILE", () => {
+    const resolved = resolveConfig({
+      env: {
+        TURBOT_PROFILE: "",
+        TURBOT_CLI_PROFILE: "demo-acme",
+        TURBOT_CLI_CREDENTIALS_PATH: "/fake/path.yml",
+      },
+      readFile: stubReadFile(SAMPLE_YAML),
+    });
+    assert.equal(resolved.profile, "demo-acme");
+  });
+
+  it("treats whitespace-only TURBOT_PROFILE as not set", () => {
+    const resolved = resolveConfig({
+      env: {
+        TURBOT_PROFILE: "   ",
+        TURBOT_CLI_PROFILE: "demo-acme",
+        TURBOT_CLI_CREDENTIALS_PATH: "/fake/path.yml",
+      },
+      readFile: stubReadFile(SAMPLE_YAML),
+    });
+    assert.equal(resolved.profile, "demo-acme");
+  });
+});
+
+describe("resolveConfig — missing-credentials error", () => {
+  it("throws a clear error when nothing is set", () => {
+    try {
+      resolveConfig({ env: {} });
+      assert.fail("expected throw");
+    } catch (err) {
+      const message = (err as Error).message;
+      assert.match(message, /Missing required Turbot credentials/);
+      assert.match(message, /TURBOT_PROFILE/);
+      assert.match(message, /TURBOT_WORKSPACE/);
+      assert.match(message, /TURBOT_ACCESS_KEY/);
+      assert.match(message, /TURBOT_SECRET_KEY/);
+      assert.match(message, /Legacy/);
+      assert.match(message, /TURBOT_CLI_PROFILE/);
+      assert.match(message, /TURBOT_GRAPHQL_ENDPOINT/);
+    }
+  });
+
+  it("throws when only one direct var is set (no profile, incomplete triple)", () => {
+    assert.throws(
+      () =>
+        resolveConfig({
+          env: { TURBOT_WORKSPACE: "https://x.example.com" },
+        }),
+      /Missing required Turbot credentials/,
+    );
+  });
+
+  it("throws when only two direct vars are set (no profile, incomplete triple)", () => {
+    assert.throws(
+      () =>
+        resolveConfig({
+          env: {
+            TURBOT_WORKSPACE: "https://x.example.com",
+            TURBOT_ACCESS_KEY: "AK",
+          },
+        }),
+      /Missing required Turbot credentials/,
+    );
   });
 });
 
@@ -288,7 +522,7 @@ describe("resolveConfig — CLI profile", () => {
   it("loads credentials from the named profile and reports metadata", () => {
     const resolved = resolveConfig({
       env: {
-        TURBOT_CLI_PROFILE: "demo-acme",
+        TURBOT_PROFILE: "demo-acme",
         TURBOT_CLI_CREDENTIALS_PATH: "/fake/path.yml",
       },
       readFile: stubReadFile(SAMPLE_YAML),
@@ -304,10 +538,10 @@ describe("resolveConfig — CLI profile", () => {
     assert.equal(resolved.credentialsPath, "/fake/path.yml");
   });
 
-  it("trims whitespace from TURBOT_CLI_PROFILE before lookup", () => {
+  it("trims whitespace from TURBOT_PROFILE before lookup", () => {
     const resolved = resolveConfig({
       env: {
-        TURBOT_CLI_PROFILE: "  demo-acme  ",
+        TURBOT_PROFILE: "  demo-acme  ",
         TURBOT_CLI_CREDENTIALS_PATH: "/fake/path.yml",
       },
       readFile: stubReadFile(SAMPLE_YAML),
@@ -319,7 +553,7 @@ describe("resolveConfig — CLI profile", () => {
   it("normalises a workspace value with a trailing slash", () => {
     const resolved = resolveConfig({
       env: {
-        TURBOT_CLI_PROFILE: "demo-trailing-slash",
+        TURBOT_PROFILE: "demo-trailing-slash",
         TURBOT_CLI_CREDENTIALS_PATH: "/fake/path.yml",
       },
       readFile: stubReadFile(SAMPLE_YAML),
@@ -333,7 +567,7 @@ describe("resolveConfig — CLI profile", () => {
   it("normalises a workspace value with multiple trailing slashes", () => {
     const resolved = resolveConfig({
       env: {
-        TURBOT_CLI_PROFILE: "demo-multiple-slashes",
+        TURBOT_PROFILE: "demo-multiple-slashes",
         TURBOT_CLI_CREDENTIALS_PATH: "/fake/path.yml",
       },
       readFile: stubReadFile(SAMPLE_YAML),
@@ -347,7 +581,7 @@ describe("resolveConfig — CLI profile", () => {
   it("does not double-append when workspace already includes /api/latest/graphql", () => {
     const resolved = resolveConfig({
       env: {
-        TURBOT_CLI_PROFILE: "demo-already-suffixed",
+        TURBOT_PROFILE: "demo-already-suffixed",
         TURBOT_CLI_CREDENTIALS_PATH: "/fake/path.yml",
       },
       readFile: stubReadFile(SAMPLE_YAML),
@@ -361,7 +595,7 @@ describe("resolveConfig — CLI profile", () => {
   it("normalises a suffixed workspace with a trailing slash", () => {
     const resolved = resolveConfig({
       env: {
-        TURBOT_CLI_PROFILE: "demo-suffixed-trailing-slash",
+        TURBOT_PROFILE: "demo-suffixed-trailing-slash",
         TURBOT_CLI_CREDENTIALS_PATH: "/fake/path.yml",
       },
       readFile: stubReadFile(SAMPLE_YAML),
@@ -375,7 +609,7 @@ describe("resolveConfig — CLI profile", () => {
   it("trims whitespace inside a quoted workspace value from the YAML", () => {
     const resolved = resolveConfig({
       env: {
-        TURBOT_CLI_PROFILE: "demo-whitespace-workspace",
+        TURBOT_PROFILE: "demo-whitespace-workspace",
         TURBOT_CLI_CREDENTIALS_PATH: "/fake/path.yml",
       },
       readFile: stubReadFile(SAMPLE_YAML),
@@ -384,32 +618,12 @@ describe("resolveConfig — CLI profile", () => {
       resolved.config.TURBOT_GRAPHQL_ENDPOINT,
       "https://demo-acme.cloud.turbot.com/api/latest/graphql",
     );
-  });
-
-  it("CLI profile takes precedence over direct env vars when both are set", () => {
-    const resolved = resolveConfig({
-      env: {
-        TURBOT_CLI_PROFILE: "demo-acme",
-        TURBOT_CLI_CREDENTIALS_PATH: "/fake/path.yml",
-        TURBOT_GRAPHQL_ENDPOINT:
-          "https://OVERRIDE.cloud.turbot.com/api/latest/graphql",
-        TURBOT_ACCESS_KEY_ID: "AK_OVERRIDE",
-        TURBOT_SECRET_ACCESS_KEY: "SK_OVERRIDE",
-      },
-      readFile: stubReadFile(SAMPLE_YAML),
-    });
-    assert.equal(
-      resolved.config.TURBOT_GRAPHQL_ENDPOINT,
-      "https://demo-acme.cloud.turbot.com/api/latest/graphql",
-    );
-    assert.equal(resolved.config.TURBOT_ACCESS_KEY_ID, "AK_GOOD");
-    assert.equal(resolved.config.TURBOT_SECRET_ACCESS_KEY, "SK_GOOD");
   });
 
   it("defaults credentials path to defaultCredentialsPath() when env var is unset", () => {
     let receivedPath = "";
     resolveConfig({
-      env: { TURBOT_CLI_PROFILE: "demo-acme" },
+      env: { TURBOT_PROFILE: "demo-acme" },
       readFile: (filePath) => {
         receivedPath = filePath;
         return SAMPLE_YAML;
@@ -421,7 +635,7 @@ describe("resolveConfig — CLI profile", () => {
   it("defaults credentials path when TURBOT_CLI_CREDENTIALS_PATH is empty string", () => {
     let receivedPath = "";
     resolveConfig({
-      env: { TURBOT_CLI_PROFILE: "demo-acme", TURBOT_CLI_CREDENTIALS_PATH: "" },
+      env: { TURBOT_PROFILE: "demo-acme", TURBOT_CLI_CREDENTIALS_PATH: "" },
       readFile: (filePath) => {
         receivedPath = filePath;
         return SAMPLE_YAML;
@@ -434,7 +648,7 @@ describe("resolveConfig — CLI profile", () => {
     let receivedPath = "";
     resolveConfig({
       env: {
-        TURBOT_CLI_PROFILE: "demo-acme",
+        TURBOT_PROFILE: "demo-acme",
         TURBOT_CLI_CREDENTIALS_PATH: "/custom/creds.yml",
       },
       readFile: (filePath) => {
@@ -449,7 +663,7 @@ describe("resolveConfig — CLI profile", () => {
     let receivedPath = "";
     resolveConfig({
       env: {
-        TURBOT_CLI_PROFILE: "demo-acme",
+        TURBOT_PROFILE: "demo-acme",
         TURBOT_CLI_CREDENTIALS_PATH: "~/Documents/turbot.yml",
       },
       readFile: (filePath) => {
@@ -467,7 +681,7 @@ describe("resolveConfig — CLI profile", () => {
     let receivedPath = "";
     resolveConfig({
       env: {
-        TURBOT_CLI_PROFILE: "demo-acme",
+        TURBOT_PROFILE: "demo-acme",
         TURBOT_CLI_CREDENTIALS_PATH: "  /custom/creds.yml  ",
       },
       readFile: (filePath) => {
@@ -481,7 +695,7 @@ describe("resolveConfig — CLI profile", () => {
   it("looks up profile names with dots", () => {
     const resolved = resolveConfig({
       env: {
-        TURBOT_CLI_PROFILE: "profile.with.dots",
+        TURBOT_PROFILE: "profile.with.dots",
         TURBOT_CLI_CREDENTIALS_PATH: "/fake/path.yml",
       },
       readFile: stubReadFile(SAMPLE_YAML),
@@ -492,7 +706,7 @@ describe("resolveConfig — CLI profile", () => {
   it("looks up profile names with spaces", () => {
     const resolved = resolveConfig({
       env: {
-        TURBOT_CLI_PROFILE: "profile with spaces",
+        TURBOT_PROFILE: "profile with spaces",
         TURBOT_CLI_CREDENTIALS_PATH: "/fake/path.yml",
       },
       readFile: stubReadFile(SAMPLE_YAML),
@@ -503,7 +717,7 @@ describe("resolveConfig — CLI profile", () => {
   it("looks up profile names with slashes", () => {
     const resolved = resolveConfig({
       env: {
-        TURBOT_CLI_PROFILE: "profile/with/slashes",
+        TURBOT_PROFILE: "profile/with/slashes",
         TURBOT_CLI_CREDENTIALS_PATH: "/fake/path.yml",
       },
       readFile: stubReadFile(SAMPLE_YAML),
@@ -514,7 +728,7 @@ describe("resolveConfig — CLI profile", () => {
   it("resolves YAML merge anchors (<<: *base)", () => {
     const resolved = resolveConfig({
       env: {
-        TURBOT_CLI_PROFILE: "demo-merged",
+        TURBOT_PROFILE: "demo-merged",
         TURBOT_CLI_CREDENTIALS_PATH: "/fake/path.yml",
       },
       readFile: stubReadFile(ANCHOR_YAML),
@@ -536,7 +750,7 @@ describe("resolveConfig — CLI profile", () => {
       "  secretKey: SK_BOM\n";
     const resolved = resolveConfig({
       env: {
-        TURBOT_CLI_PROFILE: "demo-bom",
+        TURBOT_PROFILE: "demo-bom",
         TURBOT_CLI_CREDENTIALS_PATH: "/fake/path.yml",
       },
       readFile: stubReadFile(yamlWithBom),
@@ -549,7 +763,7 @@ describe("resolveConfig — CLI profile", () => {
       () =>
         resolveConfig({
           env: {
-            TURBOT_CLI_PROFILE: "does-not-exist",
+            TURBOT_PROFILE: "does-not-exist",
             TURBOT_CLI_CREDENTIALS_PATH: "/fake/path.yml",
           },
           readFile: stubReadFile(SAMPLE_YAML),
@@ -563,7 +777,7 @@ describe("resolveConfig — CLI profile", () => {
       () =>
         resolveConfig({
           env: {
-            TURBOT_CLI_PROFILE: "demo-missing-secret",
+            TURBOT_PROFILE: "demo-missing-secret",
             TURBOT_CLI_CREDENTIALS_PATH: "/fake/path.yml",
           },
           readFile: stubReadFile(SAMPLE_YAML),
@@ -577,7 +791,7 @@ describe("resolveConfig — CLI profile", () => {
       () =>
         resolveConfig({
           env: {
-            TURBOT_CLI_PROFILE: "demo-empty-fields",
+            TURBOT_PROFILE: "demo-empty-fields",
             TURBOT_CLI_CREDENTIALS_PATH: "/fake/path.yml",
           },
           readFile: stubReadFile(SAMPLE_YAML),
@@ -591,7 +805,7 @@ describe("resolveConfig — CLI profile", () => {
       () =>
         resolveConfig({
           env: {
-            TURBOT_CLI_PROFILE: "demo-acme",
+            TURBOT_PROFILE: "demo-acme",
             TURBOT_CLI_CREDENTIALS_PATH: "/fake/path.yml",
           },
           readFile: stubReadFile("just-a-string"),
@@ -605,7 +819,7 @@ describe("resolveConfig — CLI profile", () => {
       () =>
         resolveConfig({
           env: {
-            TURBOT_CLI_PROFILE: "demo-acme",
+            TURBOT_PROFILE: "demo-acme",
             TURBOT_CLI_CREDENTIALS_PATH: "/fake/path.yml",
           },
           readFile: stubReadFile("- one\n- two\n"),
@@ -619,7 +833,7 @@ describe("resolveConfig — CLI profile", () => {
       () =>
         resolveConfig({
           env: {
-            TURBOT_CLI_PROFILE: "demo-not-mapping",
+            TURBOT_PROFILE: "demo-not-mapping",
             TURBOT_CLI_CREDENTIALS_PATH: "/fake/path.yml",
           },
           readFile: stubReadFile(SAMPLE_YAML),
@@ -633,7 +847,7 @@ describe("resolveConfig — CLI profile", () => {
       () =>
         resolveConfig({
           env: {
-            TURBOT_CLI_PROFILE: "demo-acme",
+            TURBOT_PROFILE: "demo-acme",
             TURBOT_CLI_CREDENTIALS_PATH: "/no/such/file.yml",
           },
           readFile: failingReadFile(
@@ -649,7 +863,7 @@ describe("resolveConfig — CLI profile", () => {
       () =>
         resolveConfig({
           env: {
-            TURBOT_CLI_PROFILE: "demo-acme",
+            TURBOT_PROFILE: "demo-acme",
             TURBOT_CLI_CREDENTIALS_PATH: "/some/dir",
           },
           readFile: failingReadFile(
@@ -665,7 +879,7 @@ describe("resolveConfig — CLI profile", () => {
       () =>
         resolveConfig({
           env: {
-            TURBOT_CLI_PROFILE: "demo-acme",
+            TURBOT_PROFILE: "demo-acme",
             TURBOT_CLI_CREDENTIALS_PATH: "/fake/path.yml",
           },
           readFile: stubReadFile("foo: [unterminated"),
@@ -678,7 +892,7 @@ describe("resolveConfig — CLI profile", () => {
     try {
       resolveConfig({
         env: {
-          TURBOT_CLI_PROFILE: "missing",
+          TURBOT_PROFILE: "missing",
           TURBOT_CLI_CREDENTIALS_PATH: "/some/path.yml",
         },
         readFile: stubReadFile(SAMPLE_YAML),
@@ -699,7 +913,7 @@ describe("resolveConfig — CLI profile", () => {
     try {
       resolveConfig({
         env: {
-          TURBOT_CLI_PROFILE: "demo-missing-secret",
+          TURBOT_PROFILE: "demo-missing-secret",
           TURBOT_CLI_CREDENTIALS_PATH: "/fake/path.yml",
         },
         readFile: stubReadFile(SAMPLE_YAML),
@@ -713,36 +927,29 @@ describe("resolveConfig — CLI profile", () => {
 
   describe("prototype-pollution defence", () => {
     it("does not pollute Object.prototype when YAML contains __proto__ as a top-level key", () => {
-      // Parse + access without throwing pollution into Object.prototype.
       const probe = {} as Record<string, unknown>;
       assert.equal(probe.workspace, undefined);
 
-      // Resolving __proto__ as a profile name should find the entry as an own
-      // property of the parsed map (modern yaml does not pollute Object.prototype).
       const resolved = resolveConfig({
         env: {
-          TURBOT_CLI_PROFILE: "__proto__",
+          TURBOT_PROFILE: "__proto__",
           TURBOT_CLI_CREDENTIALS_PATH: "/fake/path.yml",
         },
         readFile: stubReadFile(SAMPLE_YAML),
       });
       assert.equal(resolved.config.TURBOT_ACCESS_KEY_ID, "AK_EVIL");
 
-      // After parsing, Object.prototype must still be untouched.
       const after = {} as Record<string, unknown>;
       assert.equal(after.workspace, undefined);
       assert.equal(after.accessKey, undefined);
     });
 
     it("does not return the prototype entry for a missing profile when the YAML contains __proto__", () => {
-      // The YAML defines __proto__ but NOT 'fictional-profile'. The lookup
-      // for 'fictional-profile' must use Object.hasOwn (or equivalent) so it
-      // does not silently fall through to the prototype.
       assert.throws(
         () =>
           resolveConfig({
             env: {
-              TURBOT_CLI_PROFILE: "fictional-profile",
+              TURBOT_PROFILE: "fictional-profile",
               TURBOT_CLI_CREDENTIALS_PATH: "/fake/path.yml",
             },
             readFile: stubReadFile(SAMPLE_YAML),
@@ -756,7 +963,7 @@ describe("resolveConfig — CLI profile", () => {
         () =>
           resolveConfig({
             env: {
-              TURBOT_CLI_PROFILE: "toString",
+              TURBOT_PROFILE: "toString",
               TURBOT_CLI_CREDENTIALS_PATH: "/fake/path.yml",
             },
             readFile: stubReadFile(SAMPLE_YAML),

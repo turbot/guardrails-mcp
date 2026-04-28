@@ -24,11 +24,14 @@ export interface ResolvedConfig {
   credentialsPath?: string;
 }
 
-export const DIRECT_ENV_VARS = [
-  "TURBOT_GRAPHQL_ENDPOINT",
-  "TURBOT_ACCESS_KEY_ID",
-  "TURBOT_SECRET_ACCESS_KEY",
-] as const;
+// Env var name pairs: [preferred (Turbot CLI-aligned), legacy (v0.1.x MCP)].
+// The preferred name is checked first; if unset, we fall back to the legacy
+// name. This lets users configured for the Turbot CLI use the MCP without
+// re-defining their credentials, while keeping existing v0.1.x configs working.
+const ENV_ALIAS_WORKSPACE = ["TURBOT_WORKSPACE", "TURBOT_GRAPHQL_ENDPOINT"] as const;
+const ENV_ALIAS_ACCESS_KEY = ["TURBOT_ACCESS_KEY", "TURBOT_ACCESS_KEY_ID"] as const;
+const ENV_ALIAS_SECRET_KEY = ["TURBOT_SECRET_KEY", "TURBOT_SECRET_ACCESS_KEY"] as const;
+const ENV_ALIAS_PROFILE = ["TURBOT_PROFILE", "TURBOT_CLI_PROFILE"] as const;
 
 const GRAPHQL_PATH = "/api/latest/graphql";
 
@@ -56,6 +59,22 @@ export function buildGraphqlEndpoint(input: string): string {
   return trimmed.endsWith(GRAPHQL_PATH) ? trimmed : `${trimmed}${GRAPHQL_PATH}`;
 }
 
+// Reads a single logical credential from the environment, checking each name
+// in order. Empty / whitespace-only values are treated as unset. Returns the
+// first non-empty trimmed value, or undefined if none of the names is set.
+function readWithAliases(
+  env: NodeJS.ProcessEnv,
+  names: readonly string[],
+): string | undefined {
+  for (const name of names) {
+    const raw = env[name];
+    if (raw === undefined) continue;
+    const trimmed = raw.trim();
+    if (trimmed.length > 0) return trimmed;
+  }
+  return undefined;
+}
+
 export interface ResolveOptions {
   env?: NodeJS.ProcessEnv;
   readFile?: (filePath: string) => string;
@@ -64,21 +83,56 @@ export interface ResolveOptions {
 const defaultReadFile = (filePath: string): string =>
   readFileSync(filePath, "utf8");
 
-// Resolves a Config from environment. CLI profile (TURBOT_CLI_PROFILE) takes
-// precedence over direct env vars when both are set — the user has expressed
-// explicit intent to use the profile, so we honour it without falling back.
-// Returns the resolved config along with metadata about which method was used,
-// so callers (e.g. startup logging) can show the user which path they took
-// without needing to re-derive it.
+// Resolves a Config from environment.
+//
+// Precedence (matches the Turbot CLI):
+//   1. If all three direct credentials are present (TURBOT_WORKSPACE,
+//      TURBOT_ACCESS_KEY, TURBOT_SECRET_KEY — or any legacy aliases for the
+//      same logical fields), use those.
+//   2. Else if a profile is named (TURBOT_PROFILE or TURBOT_CLI_PROFILE),
+//      load credentials from the Turbot CLI credentials file.
+//   3. Else: throw with a clear error mentioning both options.
+//
+// Each logical credential accepts either the CLI-aligned name or the v0.1.x
+// legacy name. A mid-migration mixed config (e.g. TURBOT_WORKSPACE +
+// TURBOT_ACCESS_KEY_ID + TURBOT_SECRET_KEY) works correctly.
 export function resolveConfig(options: ResolveOptions = {}): ResolvedConfig {
   const env = options.env ?? process.env;
   const readFile = options.readFile ?? defaultReadFile;
 
-  const rawProfile = env.TURBOT_CLI_PROFILE?.trim();
-  if (rawProfile) {
-    return loadFromCliProfile(rawProfile, env, readFile);
+  const workspace = readWithAliases(env, ENV_ALIAS_WORKSPACE);
+  const accessKey = readWithAliases(env, ENV_ALIAS_ACCESS_KEY);
+  const secretKey = readWithAliases(env, ENV_ALIAS_SECRET_KEY);
+
+  if (workspace && accessKey && secretKey) {
+    return {
+      config: {
+        TURBOT_GRAPHQL_ENDPOINT: buildGraphqlEndpoint(workspace),
+        TURBOT_ACCESS_KEY_ID: accessKey,
+        TURBOT_SECRET_ACCESS_KEY: secretKey,
+      },
+      authMethod: "direct-env",
+    };
   }
-  return loadFromDirectEnv(env);
+
+  const profile = readWithAliases(env, ENV_ALIAS_PROFILE);
+  if (profile) {
+    return loadFromCliProfile(profile, env, readFile);
+  }
+
+  throw new Error(missingCredentialsMessage());
+}
+
+function missingCredentialsMessage(): string {
+  return (
+    "Missing required Turbot credentials.\n" +
+    "Set ONE of the following:\n" +
+    "  - TURBOT_PROFILE (use a profile from your Turbot CLI credentials file at " +
+    "~/.config/turbot/credentials.yml; override the path with TURBOT_CLI_CREDENTIALS_PATH)\n" +
+    "  - TURBOT_WORKSPACE, TURBOT_ACCESS_KEY, and TURBOT_SECRET_KEY (direct credentials)\n" +
+    "Legacy v0.1.x names are also accepted: TURBOT_CLI_PROFILE / " +
+    "TURBOT_GRAPHQL_ENDPOINT / TURBOT_ACCESS_KEY_ID / TURBOT_SECRET_ACCESS_KEY."
+  );
 }
 
 function loadFromCliProfile(
@@ -159,24 +213,5 @@ function loadFromCliProfile(
     authMethod: "cli-profile",
     profile,
     credentialsPath,
-  };
-}
-
-function loadFromDirectEnv(env: NodeJS.ProcessEnv): ResolvedConfig {
-  const missing = DIRECT_ENV_VARS.filter((v) => !env[v]);
-  if (missing.length > 0) {
-    throw new Error(
-      `Missing required environment variables for direct credentials: [${missing.join(", ")}].\n` +
-        `Alternatively, set TURBOT_CLI_PROFILE to use a Turbot CLI credentials profile.`,
-    );
-  }
-
-  return {
-    config: {
-      TURBOT_GRAPHQL_ENDPOINT: buildGraphqlEndpoint(env.TURBOT_GRAPHQL_ENDPOINT!),
-      TURBOT_ACCESS_KEY_ID: env.TURBOT_ACCESS_KEY_ID!,
-      TURBOT_SECRET_ACCESS_KEY: env.TURBOT_SECRET_ACCESS_KEY!,
-    },
-    authMethod: "direct-env",
   };
 }

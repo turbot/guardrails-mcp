@@ -20,11 +20,11 @@ Guardrails MCP bridges AI assistants and your Guardrails environment, allowing n
 
 ### Configuration
 
-Guardrails MCP supports two authentication methods. The **Turbot CLI profile** method is preferred because it keeps secrets out of your AI assistant configuration file — credentials are resolved from your existing `~/.config/turbot/credentials.yml` at runtime.
+Guardrails MCP supports two authentication methods. Environment variable names match the [Turbot CLI](https://turbot.com/guardrails/docs/reference/cli), so users with the CLI already configured don't need to redefine their credentials. Legacy v0.1.x names are accepted as aliases.
 
 #### Preferred: Turbot CLI profile
 
-If you use the [Turbot CLI](https://turbot.com/guardrails/docs/reference/cli), you already have a `credentials.yml` file with named profiles. Reference one of those profiles by name:
+If you use the Turbot CLI you already have a `credentials.yml` file with named profiles. Reference one by name:
 
 ```json
 {
@@ -33,14 +33,14 @@ If you use the [Turbot CLI](https://turbot.com/guardrails/docs/reference/cli), y
       "command": "npx",
       "args": ["-y", "@turbot/guardrails-mcp"],
       "env": {
-        "TURBOT_CLI_PROFILE": "your-profile-name"
+        "TURBOT_PROFILE": "your-profile-name"
       }
     }
   }
 }
 ```
 
-By default, the MCP reads credentials from `~/.config/turbot/credentials.yml`. To use a different location, set `TURBOT_CLI_CREDENTIALS_PATH` — `~` is expanded automatically (so `~/Documents/turbot.yml` works inside JSON configs that don't go through a shell).
+By default the MCP reads `~/.config/turbot/credentials.yml`. To use a different location set `TURBOT_CLI_CREDENTIALS_PATH` — `~` is expanded automatically, so `~/Documents/turbot.yml` works inside JSON configs that don't go through a shell.
 
 Example `credentials.yml`:
 
@@ -62,18 +62,31 @@ Set all three credential variables directly in the MCP server configuration:
       "command": "npx",
       "args": ["-y", "@turbot/guardrails-mcp"],
       "env": {
-        "TURBOT_GRAPHQL_ENDPOINT": "https://demo-acme.cloud.turbot.com/api/latest/graphql",
-        "TURBOT_ACCESS_KEY_ID": "abcdefgh-1234-0808-wxyz-123456789012",
-        "TURBOT_SECRET_ACCESS_KEY": "hgfedcba-1234-0101-aaaa-aabbccddee00"
+        "TURBOT_WORKSPACE": "https://demo-acme.cloud.turbot.com",
+        "TURBOT_ACCESS_KEY": "abcdefgh-1234-0808-wxyz-123456789012",
+        "TURBOT_SECRET_KEY": "hgfedcba-1234-0101-aaaa-aabbccddee00"
       }
     }
   }
 }
 ```
 
-If both methods are configured, the Turbot CLI profile takes precedence.
+`TURBOT_WORKSPACE` accepts either the bare workspace URL or a fully-qualified GraphQL endpoint. The `/api/latest/graphql` suffix is added automatically if missing, and trailing slashes / whitespace are normalised.
 
-For `TURBOT_GRAPHQL_ENDPOINT` (and the `workspace` field in `credentials.yml`) the bare workspace URL is also accepted — the `/api/latest/graphql` suffix is added automatically if missing, and trailing slashes are stripped.
+If both methods are set, the **direct credentials win** (matches the Turbot CLI's precedence). The profile is used when at least one direct variable is missing.
+
+#### Backward compatibility (v0.1.x env var names)
+
+Existing v0.1.x configurations continue to work without change. The legacy names map to the CLI-aligned names as follows:
+
+| CLI-aligned (preferred) | Legacy alias (still accepted) |
+| --- | --- |
+| `TURBOT_PROFILE` | `TURBOT_CLI_PROFILE` |
+| `TURBOT_WORKSPACE` | `TURBOT_GRAPHQL_ENDPOINT` |
+| `TURBOT_ACCESS_KEY` | `TURBOT_ACCESS_KEY_ID` |
+| `TURBOT_SECRET_KEY` | `TURBOT_SECRET_ACCESS_KEY` |
+
+When both names are set for the same field, the CLI-aligned name wins. New configurations should use the CLI-aligned names.
 
 ### AI Assistant Setup
 
@@ -208,13 +221,16 @@ Remember to:
 
    Preferred — Turbot CLI profile:
    ```sh
-   echo "TURBOT_CLI_PROFILE=your-profile-name" > .env
+   echo "TURBOT_PROFILE=your-profile-name" > .env
    ```
 
    Alternative — direct credentials:
    ```sh
-   cp .env.example .env
-   # Edit .env with your API key
+   cat > .env <<'EOF'
+   TURBOT_WORKSPACE=https://demo-acme.cloud.turbot.com
+   TURBOT_ACCESS_KEY=your-access-key
+   TURBOT_SECRET_KEY=your-secret-key
+   EOF
    ```
 4. Build the project:
    ```sh
@@ -232,7 +248,7 @@ Remember to:
          "command": "node",
          "args": ["/full/path/to/guardrails-mcp/dist/index.js"],
          "env": {
-           "TURBOT_CLI_PROFILE": "your-profile-name"
+           "TURBOT_PROFILE": "your-profile-name"
          }
        }
      }
@@ -264,7 +280,7 @@ Authenticated via direct environment variables
 
 A warning is logged if the resolved endpoint does not use HTTPS, since Basic auth credentials would travel in plaintext.
 
-- **Missing credentials:** Ensure you have set either `TURBOT_CLI_PROFILE` or all three direct credential variables (`TURBOT_GRAPHQL_ENDPOINT`, `TURBOT_ACCESS_KEY_ID`, `TURBOT_SECRET_ACCESS_KEY`).
+- **Missing credentials:** Set either `TURBOT_PROFILE` or all three direct credential variables (`TURBOT_WORKSPACE`, `TURBOT_ACCESS_KEY`, `TURBOT_SECRET_KEY`). Legacy v0.1.x names are also accepted (`TURBOT_CLI_PROFILE`, `TURBOT_GRAPHQL_ENDPOINT`, `TURBOT_ACCESS_KEY_ID`, `TURBOT_SECRET_ACCESS_KEY`).
 - **Profile not found:** Verify the profile name matches an entry in your credentials file, and that the file path is correct (`~/.config/turbot/credentials.yml` by default).
 - **Profile missing fields:** Each profile in `credentials.yml` must include `workspace`, `accessKey`, and `secretKey`.
 - **Authentication errors:** Ensure your API key is correct and has the necessary permissions. Credential values are redacted from any error message returned to your AI assistant.
